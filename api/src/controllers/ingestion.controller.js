@@ -88,7 +88,7 @@ class IngestionController {
     console.log(`📥 ${url}`);
     
     // 1. Scrape URL
-    const { title, content, contentHash } = await scraperService.scrapeUrl(url);
+    const { title, content, contentHash, sections } = await scraperService.scrapeUrl(url);
     
     if (!content || content.length < 100) {
       console.log(`  ⚠️  Skipped (insufficient content)`);
@@ -106,12 +106,13 @@ class IngestionController {
     // 3. Delete old chunks if re-ingesting
     await vectorStoreService.deleteByUrl(url);
     
-    // 4. Chunk the content
+    // 4. Chunk the content (with section information)
     const chunks = chunkerService.chunkText(content, {
       url,
       title,
       content_hash: contentHash,
-      last_crawled: lastmod || new Date().toISOString()
+      last_crawled: lastmod || new Date().toISOString(),
+      sections: sections || []
     });
     
     console.log(`  📝 ${chunks.length} chunks created`);

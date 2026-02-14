@@ -1,14 +1,14 @@
 /* Knowella Chat Widget Styles */
 
 :root {
-    --knowella-primary: #2563eb;
-    --knowella-primary-hover: #1d4ed8;
+    --knowella-primary: #4CAF50;
+    --knowella-primary-hover: #45a049;
     --knowella-bg: #ffffff;
     --knowella-text: #1f2937;
     --knowella-text-light: #6b7280;
     --knowella-border: #e5e7eb;
     --knowella-shadow: rgba(0, 0, 0, 0.1);
-    --knowella-message-user-bg: #2563eb;
+    --knowella-message-user-bg: #4CAF50;
     --knowella-message-bot-bg: #f3f4f6;
 }
 
@@ -20,11 +20,11 @@
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: var(--knowella-primary);
-    color: white;
+    background: white;
+    color: inherit;
     border: none;
     cursor: pointer;
-    box-shadow: 0 4px 12px var(--knowella-shadow);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -33,9 +33,8 @@
 }
 
 .knowella-chat-bubble:hover {
-    background: var(--knowella-primary-hover);
     transform: scale(1.05);
-    box-shadow: 0 6px 16px var(--knowella-shadow);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
 }
 
 .knowella-chat-bubble:active {
@@ -88,13 +87,14 @@
 }
 
 .knowella-chat-icon {
-    width: 36px;
-    height: 36px;
-    background: rgba(255, 255, 255, 0.2);
+    width: 56px;
+    height: 56px;
+    background: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 4px;
 }
 
 .knowella-chat-title {
@@ -197,6 +197,42 @@
 
 .knowella-message-content p + p {
     margin-top: 8px;
+}
+
+/* Markdown Formatting */
+.knowella-message-content strong {
+    font-weight: 600;
+    color: var(--knowella-text);
+}
+
+.knowella-message-content ul {
+    margin: 8px 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.knowella-message-content li {
+    position: relative;
+    margin: 4px 0;
+    padding-left: 4px;
+}
+
+.knowella-message-content li::before {
+    content: '•';
+    position: absolute;
+    left: -16px;
+    color: var(--knowella-primary);
+    font-weight: bold;
+}
+
+.knowella-message-content a {
+    color: var(--knowella-primary);
+    text-decoration: underline;
+    transition: opacity 0.2s;
+}
+
+.knowella-message-content a:hover {
+    opacity: 0.8;
 }
 
 /* Citations */

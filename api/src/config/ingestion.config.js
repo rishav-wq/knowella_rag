@@ -14,7 +14,7 @@ module.exports = {
     includedSitemaps: [
       'post-sitemap.xml',          // Blog posts (92 URLs)
       'page-sitemap.xml',          // Static pages (70 URLs)
-      'oak_portfolio-sitemap.xml'  // Portfolio/case studies (23 URLs)
+      'pk_portfolio-sitemap.xml'   // Portfolio/case studies (23 URLs)
     ],
     
     // Which sub-sitemaps to skip

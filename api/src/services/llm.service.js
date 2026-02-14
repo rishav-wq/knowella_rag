@@ -35,7 +35,7 @@ class LLMService {
           options: {
             temperature: 0.7,
             top_p: 0.9,
-            num_predict: 150  // Limit response length for faster generation
+            num_predict: 300  // Increased for complete answers without truncation
           }
         },
         { timeout: 300000 } // 300 second timeout (5 minutes)
@@ -77,12 +77,33 @@ class LLMService {
       prompt += `${rules} `;
     }
     
-    prompt += `\n\nIMPORTANT INSTRUCTIONS:
-- Answer questions using ONLY the context provided below
-- If the context doesn't contain the answer, say "I don't have enough information about that in the Knowella content"
-- Be concise and clear. When the question asks about software, technologies, or tools, list any specific names mentioned in the context (e.g. Figma, WordPress, SaaS)
-- Do not make up information
-- Always cite which source you're using when relevant\n\n`;
+    prompt += `\n\nCRITICAL GROUNDING RULES:
+1. Answer EXCLUSIVELY using the context provided below - do NOT add external knowledge
+2. If the context doesn't fully answer the question, say "I don't have enough information about that in the Knowella content"
+3. Quote or paraphrase DIRECTLY from the context - stay factually grounded
+4. Do NOT make assumptions or inferences beyond what's explicitly stated
+5. If uncertain, acknowledge limitations rather than guessing
+
+FORMATTING RULES:
+1. Structure your answer with clear sections using **bold headings**
+2. Use bullet points (•) or numbered lists for multiple items
+3. Keep paragraphs short (2-3 sentences maximum)
+4. Add blank lines between sections for readability
+
+EXAMPLE FORMAT:
+
+Knowella offers three main design services:
+
+**1. Website Design**
+• Modern, responsive layouts
+• User-friendly interfaces
+• Brand-consistent styling
+
+**2. UI/UX Design**
+• Wireframes and prototypes
+• Strategic design approach
+
+Now answer using this format.\n\n`;
     
     // Add disclaimer if specified
     if (disclaimer) {

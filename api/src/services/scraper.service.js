@@ -12,7 +12,7 @@ class ScraperService {
   /**
    * Fetch and clean content from a URL
    * @param {string} url 
-   * @returns {Promise<{title: string, content: string, contentHash: string}>}
+   * @returns {Promise<{title: string, content: string, contentHash: string, sections: Array}>}
    */
   async scrapeUrl(url) {
     try {
@@ -20,12 +20,12 @@ class ScraperService {
       const html = await this.fetchHtml(url);
       
       // Extract clean content
-      const { title, content } = this.extractContent(html);
+      const { title, content, sections } = this.extractContent(html);
       
       // Generate content hash for deduplication
       const contentHash = this.generateHash(content);
       
-      return { title, content, contentHash };
+      return { title, content, contentHash, sections };
       
     } catch (error) {
       console.error(`❌ Error scraping ${url}:`, error.message);
@@ -61,10 +61,10 @@ class ScraperService {
   }
 
   /**
-   * Extract title and main content from HTML
+   * Extract title and main content from HTML (with section headings preserved)
    * Removes navigation, ads, footers, etc.
    * @param {string} html 
-   * @returns {{title: string, content: string}}
+   * @returns {{title: string, content: string, sections: Array}}
    */
   extractContent(html) {
     const $ = cheerio.load(html);
@@ -78,7 +78,7 @@ class ScraperService {
     $('script, style, nav, header, footer, aside, .sidebar, .menu, .navigation, .comments, form, iframe').remove();
     
     // Try to find main content area (common WordPress selectors)
-    let content = '';
+    let contentElement = null;
     const mainSelectors = [
       'article .entry-content',  // Common WordPress theme
       'article',                  // Generic article
@@ -91,15 +91,83 @@ class ScraperService {
     for (const selector of mainSelectors) {
       const element = $(selector).first();
       if (element.length && element.text().trim().length > 100) {
-        content = element.text();
+        contentElement = element;
         break;
       }
     }
     
-    // Clean up the text
-    content = this.cleanText(content);
+    // Extract structured content with headings preserved
+    const { content, sections } = this.extractStructuredContent($, contentElement);
     
-    return { title, content };
+    return { title, content, sections };
+  }
+
+  /**
+   * Extract content with section headings preserved
+   * @param {CheerioAPI} $ 
+   * @param {CheerioElement} contentElement 
+   * @returns {{content: string, sections: Array<{heading: string, text: string}>}}
+   */
+  extractStructuredContent($, contentElement) {
+    if (!contentElement) {
+      return { content: '', sections: [] };
+    }
+
+    const sections = [];
+    let currentHeading = '';
+    let currentText = '';
+    let fullContent = '';
+
+    // Process each child element
+    contentElement.find('*').each((i, elem) => {
+      const $elem = $(elem);
+      const tagName = elem.tagName.toLowerCase();
+
+      // Check if it's a heading
+      if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+        // Save previous section if it exists
+        if (currentText.trim()) {
+          sections.push({
+            heading: currentHeading,
+            text: this.cleanText(currentText)
+          });
+        }
+
+        // Start new section
+        currentHeading = $elem.text().trim();
+        currentText = '';
+      } else if (tagName === 'p' || tagName === 'li' || tagName === 'div') {
+        const text = $elem.text().trim();
+        if (text) {
+          currentText += text + ' ';
+        }
+      }
+    });
+
+    // Save final section
+    if (currentText.trim()) {
+      sections.push({
+        heading: currentHeading,
+        text: this.cleanText(currentText)
+      });
+    }
+
+    // Build full content with headings
+    sections.forEach(section => {
+      if (section.heading) {
+        fullContent += `\n\n## ${section.heading}\n\n`;
+      }
+      fullContent += section.text;
+    });
+
+    // Fallback: if no sections extracted, use plain text
+    if (sections.length === 0) {
+      const plainText = contentElement.text();
+      fullContent = this.cleanText(plainText);
+      sections.push({ heading: '', text: fullContent });
+    }
+
+    return { content: this.cleanText(fullContent), sections };
   }
 
   /**
