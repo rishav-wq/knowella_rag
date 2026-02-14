@@ -23,7 +23,7 @@ class LLMService {
     const systemPrompt = this.buildSystemPrompt(retrievedChunks, botConfig);
     
     // Build user prompt
-    const userPrompt = `Question: ${question}\n\nProvide a helpful answer based ONLY on the context above. Include relevant information and cite sources.`;
+    const userPrompt = `Question: ${question}\n\nREMINDER: Use ONLY context that DIRECTLY relates to this question. IGNORE any unrelated context chunks. Provide a helpful answer and cite sources.`;
     
     try {
       const response = await axios.post(
@@ -38,7 +38,7 @@ class LLMService {
             num_predict: 300  // Increased for complete answers without truncation
           }
         },
-        { timeout: 300000 } // 300 second timeout (5 minutes)
+        { timeout: 600000 } // 600 second timeout (10 minutes) - increased for large contexts
       );
       
       const answer = response.data.response.trim();
@@ -50,6 +50,84 @@ class LLMService {
       
     } catch (error) {
       console.error('❌ Error generating LLM response:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate a streaming response using RAG (Retrieval Augmented Generation)
+   * @param {string} question - User's question
+   * @param {Array} retrievedChunks - Relevant chunks from Qdrant
+   * @param {object} botConfig - Bot behavior configuration
+   * @param {Function} onChunk - Callback for each chunk (chunk) => {}
+   * @returns {Promise<{answer: string, citations: Array}>}
+   */
+  async generateRAGResponseStream(question, retrievedChunks, botConfig, onChunk) {
+    // Build system prompt with grounding context
+    const systemPrompt = this.buildSystemPrompt(retrievedChunks, botConfig);
+    
+    // Build user prompt
+    const userPrompt = `Question: ${question}\n\nREMINDER: Use ONLY context that DIRECTLY relates to this question. IGNORE any unrelated context chunks. Provide a helpful answer and cite sources.`;
+    
+    let fullAnswer = '';
+    
+    try {
+      const response = await axios.post(
+        `${this.ollamaUrl}/api/generate`,
+        {
+          model: this.model,
+          prompt: `${systemPrompt}\n\n${userPrompt}`,
+          stream: true,
+          options: {
+            temperature: 0.7,
+            top_p: 0.9,
+            num_predict: 300
+          }
+        },
+        { 
+          timeout: 600000, // 10 minutes
+          responseType: 'stream'
+        }
+      );
+      
+      // Process the stream
+      return new Promise((resolve, reject) => {
+        response.data.on('data', (chunk) => {
+          try {
+            const lines = chunk.toString().split('\n').filter(line => line.trim());
+            
+            for (const line of lines) {
+              const parsed = JSON.parse(line);
+              
+              if (parsed.response) {
+                fullAnswer += parsed.response;
+                onChunk(parsed.response); // Send chunk to client
+              }
+              
+              if (parsed.done) {
+                const citations = this.extractCitations(retrievedChunks);
+                resolve({ answer: fullAnswer.trim(), citations });
+              }
+            }
+          } catch (parseError) {
+            console.error('Error parsing stream chunk:', parseError.message);
+          }
+        });
+        
+        response.data.on('error', (error) => {
+          console.error('❌ Stream error:', error.message);
+          reject(error);
+        });
+        
+        response.data.on('end', () => {
+          if (!fullAnswer) {
+            reject(new Error('Stream ended without response'));
+          }
+        });
+      });
+      
+    } catch (error) {
+      console.error('❌ Error generating streaming LLM response:', error.message);
       throw error;
     }
   }
@@ -79,10 +157,15 @@ class LLMService {
     
     prompt += `\n\nCRITICAL GROUNDING RULES:
 1. Answer EXCLUSIVELY using the context provided below - do NOT add external knowledge
-2. If the context doesn't fully answer the question, say "I don't have enough information about that in the Knowella content"
-3. Quote or paraphrase DIRECTLY from the context - stay factually grounded
-4. Do NOT make assumptions or inferences beyond what's explicitly stated
-5. If uncertain, acknowledge limitations rather than guessing
+2. ONLY use information that DIRECTLY answers the specific question asked
+3. IGNORE any context chunks that are NOT relevant to the question - even if provided
+4. Do NOT mix or combine information from different topics (e.g., do NOT mix "engagement" with "ergonomics", or "training" with "technology")
+5. Each context chunk may be about a different topic - ONLY use chunks that match the question's topic
+6. If less than 50% of context is relevant, focus ONLY on relevant parts and ignore the rest completely
+7. If the context doesn't fully answer the question, say "I don't have enough information about that in the Knowella content"
+8. Quote or paraphrase DIRECTLY from the context - stay factually grounded
+9. Do NOT make assumptions, inferences, or connections beyond what's explicitly stated
+10. If uncertain, acknowledge limitations rather than guessing
 
 FORMATTING RULES:
 1. Structure your answer with clear sections using **bold headings**

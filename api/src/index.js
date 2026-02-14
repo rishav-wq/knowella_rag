@@ -11,7 +11,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const multer = require('multer');
 const schedulerService = require('./services/scheduler.service');
+const bm25Service = require('./services/bm25.service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,6 +48,24 @@ const ingestionLimiter = rateLimit({
   message: { error: 'Too many ingestion requests.' }
 });
 
+// ===== FILE UPLOAD CONFIGURATION =====
+
+// Configure multer for PDF uploads
+const upload = multer({
+  storage: multer.memoryStorage(), // Store in memory (no disk writes)
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max file size
+    files: 1 // Only one file at a time
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed'), false);
+    }
+  }
+});
+
 // ===== ROUTES =====
 
 // Health check endpoint
@@ -68,6 +88,8 @@ app.get('/', (req, res) => {
     endpoints: [
       'GET /health',
       'POST /chat/knowella',
+      'POST /chat/knowella/stream',
+      'POST /chat/knowella/pdf (multipart/form-data with pdf file)',
       'POST /ingest/knowella'
     ]
   });
@@ -80,6 +102,16 @@ const chatController = require('./controllers/chat.controller');
 // Chat endpoints
 app.post('/chat/knowella', chatLimiter, (req, res) => {
   chatController.chatKnowella(req, res);
+});
+
+// Streaming chat endpoint (Server-Sent Events)
+app.post('/chat/knowella/stream', chatLimiter, (req, res) => {
+  chatController.chatKnowellaStream(req, res);
+});
+
+// PDF upload endpoint - Extract questions and answer them
+app.post('/chat/knowella/pdf', chatLimiter, upload.single('pdf'), (req, res) => {
+  chatController.chatKnowellaPDF(req, res);
 });
 
 // Stats endpoint
@@ -133,6 +165,29 @@ app.post('/ingest/single', ingestionLimiter, (req, res) => {
   ingestionController.ingestSingleUrl(req, res);
 });
 
+// Build BM25 index from existing Qdrant data
+app.post('/ingest/build-bm25', ingestionLimiter, async (req, res) => {
+  try {
+    console.log('🔨 Building BM25 index from existing data...');
+    const vectorStoreService = require('./services/vectorStore.service');
+    const allChunks = await vectorStoreService.getAllChunks();
+    await bm25Service.buildIndex(allChunks);
+    const stats = bm25Service.getStats();
+    
+    res.json({
+      success: true,
+      message: 'BM25 index built successfully',
+      stats
+    });
+  } catch (error) {
+    console.error('Error building BM25 index:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
@@ -150,11 +205,14 @@ app.use((req, res) => {
 
 // ===== START SERVER =====
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`✅ Knowella RAG API running on port ${PORT}`);
   console.log(`📊 Ollama: ${process.env.OLLAMA_URL}`);
   console.log(`🔍 Qdrant: ${process.env.QDRANT_URL}`);
   console.log(`⏱️  Rate limit: ${process.env.RATE_LIMIT_MAX} requests/minute`);
+  
+  // Load BM25 index on startup
+  await bm25Service.loadIndex();
   
   // Start scheduled jobs
   if (process.env.ENABLE_SCHEDULER !== 'false') {

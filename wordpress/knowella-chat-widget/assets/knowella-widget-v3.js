@@ -9,11 +9,12 @@
     // Configuration (passed from WordPress via wp_localize_script)
     const config = window.knowellaConfig || {
         apiUrl: 'http://localhost:3000/chat/knowella',
+        pdfApiUrl: 'http://localhost:3000/chat/knowella/pdf',
         theme: 'light'
     };
     
     // DOM Elements
-    let chatButton, chatPanel, chatMessages, chatForm, chatInput, chatSendBtn, chatClose;
+    let chatButton, chatPanel, chatMessages, chatForm, chatInput, chatSendBtn, chatClose, pdfButton, pdfInput;
     
     // State
     let isOpen = false;
@@ -34,6 +35,8 @@
         chatInput = document.getElementById('knowella-chat-input');
         chatSendBtn = document.getElementById('knowella-chat-send');
         chatClose = document.getElementById('knowella-chat-close');
+        pdfButton = document.getElementById('knowella-pdf-button');
+        pdfInput = document.getElementById('knowella-pdf-input');
         
         if (!chatButton || !chatPanel) {
             console.error('Knowella Chat Widget: Required elements not found');
@@ -44,6 +47,12 @@
         chatButton.addEventListener('click', toggleChat);
         chatClose.addEventListener('click', closeChat);
         chatForm.addEventListener('submit', handleSubmit);
+        
+        // PDF upload listeners
+        if (pdfButton && pdfInput) {
+            pdfButton.addEventListener('click', () => pdfInput.click());
+            pdfInput.addEventListener('change', handlePDFUpload);
+        }
         
         // Load chat history from sessionStorage
         loadChatHistory();
@@ -134,6 +143,83 @@
             console.error('Knowella Chat Error:', error);
             removeLoading();
             addErrorMessage('Sorry, I encountered an error. Please try again in a moment.');
+        }
+    }
+
+    /**
+     * Handle PDF upload
+     */
+    async function handlePDFUpload(e) {
+        const file = e.target.files[0];
+        
+        if (!file || isLoading) {
+            return;
+        }
+        
+        // Validate PDF
+        if (file.type !== 'application/pdf') {
+            addErrorMessage('Please upload a PDF file.');
+            return;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+            addErrorMessage('PDF file size must be less than 10MB.');
+            return;
+        }
+        
+        // Add info message
+        addMessage(`📄 Uploaded: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`, 'user');
+        
+        // Show loading indicator
+        showLoading('Processing PDF...');
+        
+        try {
+            // Create form data
+            const formData = new FormData();
+            formData.append('pdf', file);
+            
+            // Call API
+            const response = await fetch(config.pdfApiUrl, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            // Remove loading indicator
+            removeLoading();
+            
+            // Display results
+            if (data.success && data.results) {
+                // Add summary message
+                const summary = `Found ${data.totalQuestionsFound} question(s) in PDF. Processed ${data.questionsProcessed}:`;
+                addMessage(summary, 'bot');
+                
+                // Add each Q&A
+                data.results.forEach((result, index) => {
+                    setTimeout(() => {
+                        addMessage(`Q${result.questionNumber}: ${result.question}`, 'user');
+                        addMessage(result.answer, 'bot', result.citations || []);
+                    }, index * 100); // Stagger the display
+                });
+                
+                // Save to session storage
+                saveChatHistory();
+            } else {
+                addErrorMessage(data.error || 'No questions found in PDF.');
+            }
+            
+        } catch (error) {
+            console.error('PDF Upload Error:', error);
+            removeLoading();
+            addErrorMessage('Failed to process PDF. Please try again.');
+        } finally {
+            // Reset file input
+            pdfInput.value = '';
         }
     }
     
@@ -233,10 +319,11 @@
     /**
      * Show loading indicator
      */
-    function showLoading() {
+    function showLoading(customMessage) {
         isLoading = true;
         chatSendBtn.disabled = true;
         chatInput.disabled = true;
+        if (pdfButton) pdfButton.disabled = true;
         
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'knowella-message knowella-message-bot';
@@ -244,6 +331,13 @@
         
         const contentDiv = document.createElement('div');
         contentDiv.className = 'knowella-message-content';
+        
+        if (customMessage) {
+            const messageP = document.createElement('p');
+            messageP.textContent = customMessage;
+            messageP.style.marginBottom = '8px';
+            contentDiv.appendChild(messageP);
+        }
         
         const loadingIndicator = document.createElement('div');
         loadingIndicator.className = 'knowella-loading';
@@ -268,6 +362,7 @@
         chatSendBtn.disabled = false;
         chatInput.disabled = false;
         chatInput.focus();
+        if (pdfButton) pdfButton.disabled = false;
         
         const loadingDiv = document.getElementById('knowella-loading');
         if (loadingDiv) {

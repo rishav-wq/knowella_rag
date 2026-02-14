@@ -123,6 +123,23 @@
             <div class="knowella-chat-input-container">
                 <form id="knowella-chat-form">
                     <input 
+                        type="file" 
+                        id="knowella-pdf-input" 
+                        accept=".pdf"
+                        style="display: none;"
+                    />
+                    <button 
+                        type="button" 
+                        id="knowella-pdf-button" 
+                        class="knowella-pdf-btn" 
+                        aria-label="Upload PDF"
+                        title="Upload PDF with questions"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <input 
                         type="text" 
                         id="knowella-chat-input" 
                         class="knowella-chat-input" 
@@ -148,6 +165,7 @@
         // Widget configuration
         window.knowellaConfig = {
             apiUrl: 'http://localhost:3000/chat/knowella',  // Update this for production
+            pdfApiUrl: 'http://localhost:3000/chat/knowella/pdf',  // PDF upload endpoint
             theme: 'light'
         };
     </script>

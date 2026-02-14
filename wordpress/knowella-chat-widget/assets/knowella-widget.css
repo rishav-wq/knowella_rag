@@ -365,6 +365,33 @@
     cursor: not-allowed;
 }
 
+/* PDF Upload Button */
+.knowella-pdf-btn {
+    width: 40px;
+    height: 40px;
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-right: 8px;
+}
+
+.knowella-pdf-btn:hover:not(:disabled) {
+    background: var(--knowella-primary);
+    color: white;
+    border-color: var(--knowella-primary);
+}
+
+.knowella-pdf-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .knowella-chat-disclaimer {
     margin: 0;
     font-size: 11px;

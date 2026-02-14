@@ -9,6 +9,7 @@ const scraperService = require('../services/scraper.service');
 const chunkerService = require('../services/chunker.service');
 const embeddingsService = require('../services/embeddings.service');
 const vectorStoreService = require('../services/vectorStore.service');
+const bm25Service = require('../services/bm25.service');
 const config = require('../config/ingestion.config');
 
 class IngestionController {
@@ -56,18 +57,26 @@ class IngestionController {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
       const stats = await vectorStoreService.getStats();
       
+      // Step 3: Build BM25 index from all chunks
+      console.log(`\n🔨 Building BM25 index...`);
+      const allChunks = await vectorStoreService.getAllChunks();
+      await bm25Service.buildIndex(allChunks);
+      const bm25Stats = bm25Service.getStats();
+      
       console.log(`\n✅ Ingestion complete!`);
       console.log(`   Processed: ${processedCount}`);
       console.log(`   Errors: ${errorCount}`);
       console.log(`   Time: ${elapsed}s`);
-      console.log(`   Total chunks in DB: ${stats.total_points}\n`);
+      console.log(`   Total chunks in DB: ${stats.total_points}`);
+      console.log(`   BM25 index: ${bm25Stats.totalDocuments} documents\n`);
       
       res.json({
         success: true,
         processed: processedCount,
         errors: errorCount,
         elapsed_seconds: parseFloat(elapsed),
-        stats
+        stats,
+        bm25Stats
       });
       
     } catch (error) {

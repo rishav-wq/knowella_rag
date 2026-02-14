@@ -110,6 +110,7 @@ class VectorStoreService {
       });
       
       return results.map(result => ({
+        id: result.id, // Include ID for hybrid search matching
         text: result.payload.text,
         url: result.payload.url,
         title: result.payload.title,
@@ -195,6 +196,58 @@ class VectorStoreService {
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
+  }
+
+  /**
+   * Get all chunks from collection (for BM25 index building)
+   * @returns {Promise<Array>}
+   */
+  async getAllChunks() {
+    try {
+      const batchSize = 100;
+      let offset = null;
+      const allChunks = [];
+
+      while (true) {
+        const result = await this.client.scroll(this.collectionName, {
+          limit: batchSize,
+          offset: offset,
+          with_payload: true,
+          with_vector: false // Don't need vectors for BM25
+        });
+
+        if (!result.points || result.points.length === 0) {
+          break;
+        }
+
+        // Extract chunks
+        for (const point of result.points) {
+          allChunks.push({
+            id: point.id,
+            text: point.payload.text,
+            metadata: {
+              url: point.payload.url,
+              title: point.payload.title,
+              section_heading: point.payload.section_heading,
+              chunk_index: point.payload.chunk_index
+            }
+          });
+        }
+
+        // Check if there are more points
+        if (!result.next_page_offset) {
+          break;
+        }
+        offset = result.next_page_offset;
+      }
+
+      console.log(`📚 Retrieved ${allChunks.length} chunks from Qdrant`);
+      return allChunks;
+
+    } catch (error) {
+      console.error('Error getting all chunks:', error.message);
+      return [];
+    }
   }
 
   /**
