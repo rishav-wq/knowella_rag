@@ -1,0 +1,370 @@
+/* Knowella Chat Widget Styles */
+
+:root {
+    --knowella-primary: #2563eb;
+    --knowella-primary-hover: #1d4ed8;
+    --knowella-bg: #ffffff;
+    --knowella-text: #1f2937;
+    --knowella-text-light: #6b7280;
+    --knowella-border: #e5e7eb;
+    --knowella-shadow: rgba(0, 0, 0, 0.1);
+    --knowella-message-user-bg: #2563eb;
+    --knowella-message-bot-bg: #f3f4f6;
+}
+
+/* Chat Button (Floating Bubble) */
+.knowella-chat-bubble {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--knowella-primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px var(--knowella-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 9998;
+}
+
+.knowella-chat-bubble:hover {
+    background: var(--knowella-primary-hover);
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px var(--knowella-shadow);
+}
+
+.knowella-chat-bubble:active {
+    transform: scale(0.95);
+}
+
+/* Chat Panel */
+.knowella-chat-panel {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 400px;
+    height: 600px;
+    max-height: calc(100vh - 100px);
+    background: var(--knowella-bg);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 9999;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header */
+.knowella-chat-header {
+    background: var(--knowella-primary);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.knowella-chat-header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.knowella-chat-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.knowella-chat-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.knowella-chat-status {
+    margin: 4px 0 0 0;
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.knowella-chat-close {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.knowella-chat-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Messages Container */
+.knowella-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.knowella-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.knowella-chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.knowella-chat-messages::-webkit-scrollbar-thumb {
+    background: var(--knowella-border);
+    border-radius: 3px;
+}
+
+/* Message Styles */
+.knowella-message {
+    display: flex;
+    gap: 8px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.knowella-message-user {
+    flex-direction: row-reverse;
+}
+
+.knowella-message-content {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.knowella-message-bot .knowella-message-content {
+    background: var(--knowella-message-bot-bg);
+    color: var(--knowella-text);
+    border-bottom-left-radius: 4px;
+}
+
+.knowella-message-user .knowella-message-content {
+    background: var(--knowella-message-user-bg);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.knowella-message-content p {
+    margin: 0;
+}
+
+.knowella-message-content p + p {
+    margin-top: 8px;
+}
+
+/* Citations */
+.knowella-citations {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--knowella-border);
+}
+
+.knowella-citations-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--knowella-text-light);
+    margin-bottom: 8px;
+}
+
+.knowella-citation {
+    display: block;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background: white;
+    border: 1px solid var(--knowella-border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--knowella-primary);
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.knowella-citation:hover {
+    border-color: var(--knowella-primary);
+    background: #eff6ff;
+}
+
+.knowella-citation-title {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.knowella-citation-url {
+    font-size: 11px;
+    color: var(--knowella-text-light);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Loading Indicator */
+.knowella-loading {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+}
+
+.knowella-loading-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--knowella-text-light);
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.knowella-loading-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.knowella-loading-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* Input Area */
+.knowella-chat-input-container {
+    border-top: 1px solid var(--knowella-border);
+    padding: 16px;
+    background: var(--knowella-bg);
+}
+
+#knowella-chat-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.knowella-chat-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--knowella-border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.knowella-chat-input:focus {
+    border-color: var(--knowella-primary);
+}
+
+.knowella-chat-send-btn {
+    width: 40px;
+    height: 40px;
+    background: var(--knowella-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.knowella-chat-send-btn:hover:not(:disabled) {
+    background: var(--knowella-primary-hover);
+}
+
+.knowella-chat-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.knowella-chat-disclaimer {
+    margin: 0;
+    font-size: 11px;
+    color: var(--knowella-text-light);
+    text-align: center;
+}
+
+/* Error Message */
+.knowella-error {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin: 8px 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    .knowella-chat-panel {
+        width: calc(100vw - 32px);
+        height: calc(100vh - 48px);
+        max-height: calc(100vh - 48px);
+        bottom: 16px;
+        right: 16px;
+    }
+    
+    .knowella-chat-bubble {
+        bottom: 16px;
+        right: 16px;
+        width: 56px;
+        height: 56px;
+    }
+}
+
+/* Hidden State */
+.knowella-hidden {
+    display: none !important;
+}

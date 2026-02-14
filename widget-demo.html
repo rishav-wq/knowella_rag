@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowella Chat Widget - Standalone Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: #f9fafb;
+        }
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1f2937;
+            margin-top: 0;
+        }
+        .demo-info {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .demo-content {
+            line-height: 1.8;
+            color: #374151;
+        }
+    </style>
+    
+    <!-- Load Widget CSS -->
+    <link rel="stylesheet" href="wordpress/knowella-chat-widget/assets/knowella-widget.css?v=2">
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🤖 Knowella Chat Widget Demo</h1>
+        
+        <div class="demo-info">
+            <strong>📍 Look for the blue chat bubble in the bottom-right corner!</strong>
+            <p style="margin: 8px 0 0 0;">Click it to open the chat and test the RAG bot.</p>
+        </div>
+        
+        <div class="demo-content">
+            <h2>About This Demo</h2>
+            <p>This is a standalone demo of the Knowella Chat Widget. The widget is fully functional and connects to your RAG API endpoint.</p>
+            
+            <h3>Features:</h3>
+            <ul>
+                <li>✅ Floating chat bubble interface</li>
+                <li>✅ Clean, modern design</li>
+                <li>✅ Mobile responsive</li>
+                <li>✅ Citations with clickable links</li>
+                <li>✅ Session-based chat history</li>
+                <li>✅ Loading indicators</li>
+                <li>✅ Error handling</li>
+            </ul>
+            
+            <h3>Try Asking:</h3>
+            <ul>
+                <li>"What software does Knowella use?"</li>
+                <li>"What design services does Knowella offer?"</li>
+                <li>"How does Knowella help with supply chain management?"</li>
+                <li>"What metrics does Knowella report for organizations?"</li>
+            </ul>
+            
+            <h3>Installation Instructions:</h3>
+            <ol>
+                <li>Zip the <code>wordpress/knowella-chat-widget</code> folder</li>
+                <li>Go to WordPress Admin → Plugins → Add New → Upload Plugin</li>
+                <li>Upload and activate the plugin</li>
+                <li>Configure settings at Settings → Knowella Chat</li>
+                <li>The widget will appear on all pages automatically!</li>
+            </ol>
+        </div>
+    </div>
+    
+    <!-- Widget HTML -->
+    <div id="knowella-chat-widget">
+        <!-- Chat Button (floating bubble) -->
+        <button id="knowella-chat-button" class="knowella-chat-bubble" aria-label="Open Knowella Chat">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12C2 13.93 2.6 15.71 3.63 17.19L2.05 21.95L7.05 20.41C8.48 21.32 10.18 21.87 12 21.87C17.52 21.87 22 17.39 22 11.87C22 6.35 17.52 2 12 2Z" fill="currentColor"/>
+                <circle cx="8" cy="12" r="1" fill="white"/>
+                <circle cx="12" cy="12" r="1" fill="white"/>
+                <circle cx="16" cy="12" r="1" fill="white"/>
+            </svg>
+        </button>
+        
+        <!-- Chat Panel -->
+        <div id="knowella-chat-panel" class="knowella-chat-panel" style="display: none;">
+            <!-- Header -->
+            <div class="knowella-chat-header">
+                <div class="knowella-chat-header-content">
+                    <div class="knowella-chat-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C6.48 2 2 6.48 2 12C2 13.93 2.6 15.71 3.63 17.19L2.05 21.95L7.05 20.41C8.48 21.32 10.18 21.87 12 21.87C17.52 21.87 22 17.39 22 11.87C22 6.35 17.52 2 12 2Z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="knowella-chat-title">Knowella Assistant</h3>
+                        <p class="knowella-chat-status">Ask me anything about Knowella</p>
+                    </div>
+                </div>
+                <button id="knowella-chat-close" class="knowella-chat-close" aria-label="Close chat">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Messages Container -->
+            <div id="knowella-chat-messages" class="knowella-chat-messages">
+                <div class="knowella-message knowella-message-bot">
+                    <div class="knowella-message-content">
+                        <p>👋 Hi! I'm the Knowella AI assistant. Ask me anything about Knowella's products, services, or solutions!</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="knowella-chat-input-container">
+                <form id="knowella-chat-form">
+                    <input 
+                        type="text" 
+                        id="knowella-chat-input" 
+                        class="knowella-chat-input" 
+                        placeholder="Ask a question..."
+                        autocomplete="off"
+                        maxlength="500"
+                    />
+                    <button type="submit" id="knowella-chat-send" class="knowella-chat-send-btn" aria-label="Send message">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </form>
+                <p class="knowella-chat-disclaimer">
+                    Powered by Knowella AI • Responses based on knowella.com content
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Configure and Load Widget JS -->
+    <script>
+        // Widget configuration
+        window.knowellaConfig = {
+            apiUrl: 'http://localhost:3000/chat/knowella',  // Update this for production
+            theme: 'light'
+        };
+    </script>
+    <script src="wordpress/knowella-chat-widget/assets/knowella-widget.js?v=2"></script>
+</body>
+</html>

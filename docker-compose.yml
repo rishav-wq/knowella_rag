@@ -1,0 +1,76 @@
+services:
+  # Ollama - LLM Inference Engine
+  # This runs the AI models locally (Llama, Mistral, etc.)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: knowella_ollama
+    ports:
+      - "11434:11434"  # Ollama API port
+    volumes:
+      - ollama_data:/root/.ollama  # Persist downloaded models
+    restart: unless-stopped
+    # Note: For GPU support, add deploy.resources.reservations.devices
+    # For now, we're running CPU-only
+    
+  # Qdrant - Vector Database
+  # Stores embeddings and enables similarity search
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: knowella_qdrant
+    ports:
+      - "6333:6333"  # HTTP API
+      - "6334:6334"  # gRPC API (optional)
+    volumes:
+      - qdrant_data:/qdrant/storage  # Persist vector data
+    restart: unless-stopped
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      
+  # Node.js API Backend
+  # Handles chat requests, ingestion, and orchestrates RAG flow
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: knowella_api
+    ports:
+      - "3000:3000"  # API server port
+    volumes:
+      - ./api:/app  # Mount code for development
+      - /app/node_modules  # Prevent node_modules override
+    environment:
+      - NODE_ENV=development
+      - OLLAMA_URL=http://ollama:11434
+      - QDRANT_URL=http://qdrant:6333
+      - PORT=3000
+      - RATE_LIMIT_MAX=30  # requests per minute
+      - ENABLE_SCHEDULER=true  # Enable daily auto-update
+    depends_on:
+      - ollama
+      - qdrant
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  # Handles rate limiting, CORS, and load balancing
+  nginx:
+    image: nginx:alpine
+    container_name: knowella_nginx
+    ports:
+      - "80:80"  # HTTP port
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+    command: npm run dev
+
+volumes:
+  # Persistent storage for models and vector data
+  ollama_data:
+    driver: local
+  qdrant_data:
+    driver: local
+
+networks:
+  default:
+    name: knowella_network
