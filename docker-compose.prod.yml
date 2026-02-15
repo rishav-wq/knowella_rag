@@ -1,0 +1,47 @@
+services:
+  # Qdrant - Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: knowella_qdrant
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+
+  # Node.js API Backend
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: knowella_api
+    command: ["npm", "start"]
+    env_file:
+      - ./api/.env
+    volumes:
+      - api_data:/app/data
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: knowella_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+    driver: local
+  api_data:
+    driver: local
+
+networks:
+  default:
+    name: knowella_network
