@@ -1,4 +1,12 @@
 services:
+  # Ollama - Embedding Model (nomic-embed-text)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: knowella_ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
   # Qdrant - Vector Database
   qdrant:
     image: qdrant/qdrant:latest
@@ -22,6 +30,7 @@ services:
       - api_data:/app/data
     depends_on:
       - qdrant
+      - ollama
     restart: unless-stopped
 
   # Nginx Reverse Proxy
@@ -37,6 +46,8 @@ services:
     restart: unless-stopped
 
 volumes:
+  ollama_data:
+    driver: local
   qdrant_data:
     driver: local
   api_data:
