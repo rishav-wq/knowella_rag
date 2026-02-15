@@ -47,16 +47,17 @@ class Knowella_Chat_Widget {
         
         wp_enqueue_script(
             'knowella-chat-widget',
-            plugins_url('assets/knowella-widget.js', __FILE__),
+            plugins_url('assets/knowella-widget-v4.js', __FILE__),
             array(),
-            '1.0.0',
+            '4.0.0',
             true
         );
-        
+
         // Pass config to JavaScript
         wp_localize_script('knowella-chat-widget', 'knowellaConfig', array(
             'apiUrl' => $this->api_url,
-            'theme' => get_option('knowella_chat_theme', 'light')
+            'theme' => get_option('knowella_chat_theme', 'light'),
+            'logoUrl' => plugins_url('assets/logo2.png', __FILE__)
         ));
     }
     
