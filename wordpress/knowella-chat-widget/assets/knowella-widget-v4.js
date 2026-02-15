@@ -23,10 +23,16 @@
     // State
     let isOpen = false;
     let isLoading = false;
-    let currentView = 'welcome'; // 'welcome' or 'chat'
+    let currentView = 'welcome'; // 'welcome', 'form', or 'chat'
 
-    // Session storage key for chat history
+    // Session storage keys
     const STORAGE_KEY = 'knowella_chat_history';
+    const USER_INFO_KEY = 'knowella_user_info';
+    const SESSION_ID_KEY = 'knowella_session_id';
+
+    // User info (captured from pre-chat form)
+    let userInfo = null;
+    let sessionId = null;
 
     /**
      * Initialize widget
@@ -49,6 +55,10 @@
             console.error('Knowella Chat Widget: Required elements not found');
             return;
         }
+
+        // Load user info and session ID from storage
+        loadUserInfo();
+        loadSessionId();
 
         // Event listeners
         chatButton.addEventListener('click', toggleChat);
@@ -77,6 +87,51 @@
     }
 
     /**
+     * Generate unique session ID
+     */
+    function generateSessionId() {
+        return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    /**
+     * Load session ID from storage or create new one
+     */
+    function loadSessionId() {
+        sessionId = sessionStorage.getItem(SESSION_ID_KEY);
+        if (!sessionId) {
+            sessionId = generateSessionId();
+            sessionStorage.setItem(SESSION_ID_KEY, sessionId);
+        }
+    }
+
+    /**
+     * Load user info from storage
+     */
+    function loadUserInfo() {
+        try {
+            const stored = sessionStorage.getItem(USER_INFO_KEY);
+            if (stored) {
+                userInfo = JSON.parse(stored);
+            }
+        } catch (error) {
+            console.warn('Failed to load user info:', error);
+            userInfo = null;
+        }
+    }
+
+    /**
+     * Save user info to storage
+     */
+    function saveUserInfo(name, email) {
+        userInfo = { name, email };
+        try {
+            sessionStorage.setItem(USER_INFO_KEY, JSON.stringify(userInfo));
+        } catch (error) {
+            console.warn('Failed to save user info:', error);
+        }
+    }
+
+    /**
      * Toggle chat panel
      */
     function toggleChat() {
@@ -95,15 +150,21 @@
         chatButton.style.display = 'none';
         isOpen = true;
 
-        // Check if there's chat history
-        const hasHistory = sessionStorage.getItem(STORAGE_KEY);
-        if (hasHistory) {
-            // Load history and show chat view
-            loadChatHistory();
-            showChatView();
+        // Check if user has already provided info
+        if (!userInfo) {
+            // Show pre-chat form to collect name and email
+            showPreChatForm();
         } else {
-            // Show welcome screen
-            showWelcomeScreen();
+            // User info exists, check if there's chat history
+            const hasHistory = sessionStorage.getItem(STORAGE_KEY);
+            if (hasHistory) {
+                // Load history and show chat view
+                loadChatHistory();
+                showChatView();
+            } else {
+                // Show welcome screen
+                showWelcomeScreen();
+            }
         }
     }
 
@@ -144,6 +205,117 @@
 
         chatInput.focus();
         scrollToBottom();
+    }
+
+    /**
+     * Show pre-chat form to collect user info
+     */
+    function showPreChatForm() {
+        currentView = 'form';
+
+        // Hide other views (don't destroy them)
+        welcomeScreen.classList.add('hidden');
+        chatMessages.classList.add('hidden');
+        chatBack.classList.remove('active');
+
+        // Remove existing form if any
+        const existingForm = document.getElementById('knowella-prechat-overlay');
+        if (existingForm) existingForm.remove();
+
+        // Create form as a separate overlay div (don't touch welcomeScreen innerHTML)
+        const formOverlay = document.createElement('div');
+        formOverlay.id = 'knowella-prechat-overlay';
+        formOverlay.className = 'knowella-prechat-overlay';
+        formOverlay.innerHTML = `
+            <div class="knowella-prechat-form">
+                <div class="knowella-prechat-header">
+                    <img src="${config.logoUrl}" alt="Knowella" class="knowella-prechat-logo">
+                    <h3>Welcome to Knowella Chat!</h3>
+                    <p>Please share your details to get started</p>
+                </div>
+                <form id="knowella-prechat-form-element">
+                    <div class="knowella-form-group">
+                        <label for="knowella-user-name">Name *</label>
+                        <input
+                            type="text"
+                            id="knowella-user-name"
+                            placeholder="Your full name"
+                            required
+                            minlength="2"
+                        >
+                    </div>
+                    <div class="knowella-form-group">
+                        <label for="knowella-user-email">Email *</label>
+                        <input
+                            type="email"
+                            id="knowella-user-email"
+                            placeholder="your.email@example.com"
+                            required
+                        >
+                    </div>
+                    <div class="knowella-form-privacy">
+                        <small>We'll use this info to provide better support. Your privacy is important to us.</small>
+                    </div>
+                    <button type="submit" class="knowella-prechat-submit">
+                        Start Chatting
+                    </button>
+                </form>
+            </div>
+        `;
+
+        // Insert form overlay into chat panel (after header, before input)
+        const inputContainer = chatPanel.querySelector('.knowella-chat-input-container');
+        chatPanel.insertBefore(formOverlay, inputContainer);
+
+        // Add form submit handler
+        const form = document.getElementById('knowella-prechat-form-element');
+        if (form) {
+            form.addEventListener('submit', handlePreChatFormSubmit);
+        }
+
+        // Focus on name input
+        const nameInput = document.getElementById('knowella-user-name');
+        if (nameInput) {
+            setTimeout(() => nameInput.focus(), 100);
+        }
+    }
+
+    /**
+     * Handle pre-chat form submission
+     */
+    function handlePreChatFormSubmit(e) {
+        e.preventDefault();
+
+        const nameInput = document.getElementById('knowella-user-name');
+        const emailInput = document.getElementById('knowella-user-email');
+
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+
+        // Validate
+        if (!name || name.length < 2) {
+            alert('Please enter your name (at least 2 characters)');
+            nameInput.focus();
+            return;
+        }
+
+        if (!email || !email.includes('@')) {
+            alert('Please enter a valid email address');
+            emailInput.focus();
+            return;
+        }
+
+        // Save user info
+        saveUserInfo(name, email);
+
+        // Remove the form overlay (original welcome screen is untouched)
+        const formOverlay = document.getElementById('knowella-prechat-overlay');
+        if (formOverlay) formOverlay.remove();
+
+        // Show original welcome screen
+        showWelcomeScreen();
+
+        console.log('User info saved:', { name, email, sessionId });
     }
 
     /**
@@ -195,13 +367,23 @@
         showLoading();
 
         try {
-            // Call API
+            // Ensure user info exists (shouldn't happen, but safety check)
+            if (!userInfo || !sessionId) {
+                throw new Error('User information is missing');
+            }
+
+            // Call API with user info
             const response = await fetch(config.apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ question })
+                body: JSON.stringify({
+                    question,
+                    name: userInfo.name,
+                    email: userInfo.email,
+                    sessionId: sessionId
+                })
             });
 
             if (!response.ok) {

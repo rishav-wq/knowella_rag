@@ -91,6 +91,7 @@ app.get('/', (req, res) => {
 // Import controllers
 const ingestionController = require('./controllers/ingestion.controller');
 const chatController = require('./controllers/chat.controller');
+const analyticsService = require('./services/analytics.service');
 
 // Chat endpoints
 app.post('/chat/knowella', chatLimiter, (req, res) => {
@@ -100,6 +101,35 @@ app.post('/chat/knowella', chatLimiter, (req, res) => {
 // Stats endpoint
 app.get('/stats', (req, res) => {
   chatController.getStats(req, res);
+});
+
+// Analytics endpoints (protected - should add authentication in production)
+app.get('/analytics/summary', (req, res) => {
+  try {
+    const summary = analyticsService.getAnalyticsSummary();
+    res.json(summary);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/analytics/export', (req, res) => {
+  try {
+    const data = analyticsService.exportAllData();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/analytics/session/:sessionId', (req, res) => {
+  try {
+    const session = analyticsService.getSession(req.params.sessionId);
+    const queries = analyticsService.getSessionQueries(req.params.sessionId);
+    res.json({ session, queries });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Ingestion endpoints

@@ -6,32 +6,66 @@
 const retrievalService = require('../services/retrieval.service');
 const llmService = require('../services/llm.service');
 const vectorStoreService = require('../services/vectorStore.service');
+const analyticsService = require('../services/analytics.service');
 
 class ChatController {
   /**
    * Handle chat request for Knowella bot
-   * @param {object} req 
-   * @param {object} res 
+   * @param {object} req
+   * @param {object} res
    */
   async chatKnowella(req, res) {
     const startTime = Date.now();
-    const { question } = req.body;
-    
+    const { question, name, email, sessionId } = req.body;
+
     // Validation
     if (!question || typeof question !== 'string') {
-      return res.status(400).json({ 
-        error: 'Question is required and must be a string' 
+      return res.status(400).json({
+        error: 'Question is required and must be a string'
       });
     }
-    
+
     if (question.trim().length < 3) {
-      return res.status(400).json({ 
-        error: 'Question is too short' 
+      return res.status(400).json({
+        error: 'Question is too short'
       });
     }
-    
+
+    // Validate user info (required for analytics)
+    if (!name || !email || !sessionId) {
+      return res.status(400).json({
+        error: 'User information required (name, email, sessionId)'
+      });
+    }
+
     try {
-      console.log(`\n💬 Question: "${question}"`);
+      // Extract IP address (supporting various proxy headers)
+      const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+        || req.headers['x-real-ip']
+        || req.socket.remoteAddress
+        || req.connection.remoteAddress
+        || 'unknown';
+
+      const userAgent = req.headers['user-agent'] || 'unknown';
+
+      // Track user session (create or update)
+      try {
+        analyticsService.createOrUpdateSession(
+          sessionId,
+          name,
+          email,
+          ipAddress,
+          userAgent
+        );
+
+        // Log the user's query (question only, not bot response)
+        analyticsService.logQuery(sessionId, question);
+
+        console.log(`\n💬 Question from ${name} (${email}): "${question}"`);
+      } catch (analyticsError) {
+        // Don't fail the request if analytics fails
+        console.error('Analytics tracking error:', analyticsError);
+      }
       
       // Step 1: Retrieve relevant chunks (configurable via env)
       const topK = parseInt(process.env.CHAT_TOP_K, 10) || 8;
