@@ -11,22 +11,34 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const multer = require('multer');
-const schedulerService = require('./services/scheduler.service');
-const bm25Service = require('./services/bm25.service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ===== MIDDLEWARE =====
 
-// CORS - Allow all origins for development/testing
-// For production, set WORDPRESS_DOMAIN environment variable
+// CORS - Allow requests from WordPress domain and local file testing
 app.use(cors({
-  origin: true, // Allow all origins
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like local file:// or mobile apps)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.WORDPRESS_DOMAIN,
+      'http://localhost',
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'null' // Allow direct file:// access for testing
+    ].filter(Boolean);
+    
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for development
+    }
+  },
+  methods: ['GET', 'POST'],
+  credentials: true
 }));
 
 // JSON body parser with size limit
@@ -46,24 +58,6 @@ const ingestionLimiter = rateLimit({
   windowMs: 60000, // 1 minute
   max: 10, // 10 requests per minute
   message: { error: 'Too many ingestion requests.' }
-});
-
-// ===== FILE UPLOAD CONFIGURATION =====
-
-// Configure multer for PDF uploads
-const upload = multer({
-  storage: multer.memoryStorage(), // Store in memory (no disk writes)
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB max file size
-    files: 1 // Only one file at a time
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF files are allowed'), false);
-    }
-  }
 });
 
 // ===== ROUTES =====
@@ -88,8 +82,6 @@ app.get('/', (req, res) => {
     endpoints: [
       'GET /health',
       'POST /chat/knowella',
-      'POST /chat/knowella/stream',
-      'POST /chat/knowella/pdf (multipart/form-data with pdf file)',
       'POST /ingest/knowella'
     ]
   });
@@ -104,55 +96,9 @@ app.post('/chat/knowella', chatLimiter, (req, res) => {
   chatController.chatKnowella(req, res);
 });
 
-// Streaming chat endpoint (Server-Sent Events)
-app.post('/chat/knowella/stream', chatLimiter, (req, res) => {
-  chatController.chatKnowellaStream(req, res);
-});
-
-// PDF upload endpoint - Extract questions and answer them
-app.post('/chat/knowella/pdf', chatLimiter, upload.single('pdf'), (req, res) => {
-  chatController.chatKnowellaPDF(req, res);
-});
-
 // Stats endpoint
 app.get('/stats', (req, res) => {
   chatController.getStats(req, res);
-});
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Metrics endpoint (basic performance stats)
-app.get('/metrics', (req, res) => {
-  const memUsage = process.memoryUsage();
-  res.json({
-    uptime_seconds: Math.floor(process.uptime()),
-    memory: {
-      rss_mb: Math.round(memUsage.rss / 1024 / 1024),
-      heap_used_mb: Math.round(memUsage.heapUsed / 1024 / 1024),
-      heap_total_mb: Math.round(memUsage.heapTotal / 1024 / 1024)
-    },
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Bot configuration endpoint (for WordPress)
-app.get('/config/knowella', (req, res) => {
-  // In production, this could fetch from WordPress API or database
-  // For now, return default configuration
-  res.json({
-    tone: process.env.BOT_TONE || 'helpful, professional, and friendly',
-    rules: process.env.BOT_RULES || 'Keep answers concise and relevant. Focus on Knowella\'s AI-powered productivity solutions.',
-    disclaimer: process.env.BOT_DISCLAIMER || 'This information is based on Knowella\'s website content. For specific inquiries, please contact Knowella directly.'
-  });
 });
 
 // Ingestion endpoints
@@ -160,32 +106,19 @@ app.post('/ingest/knowella', ingestionLimiter, (req, res) => {
   ingestionController.ingestKnowella(req, res);
 });
 
+app.post('/rebuild-bm25', ingestionLimiter, async (req, res) => {
+  try {
+    console.log('\n🔨 Rebuilding BM25 index from existing Qdrant chunks...\n');
+    await ingestionController.buildBM25Index();
+    res.json({ success: true, message: 'BM25 index rebuilt successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Test endpoint - ingest single URL
 app.post('/ingest/single', ingestionLimiter, (req, res) => {
   ingestionController.ingestSingleUrl(req, res);
-});
-
-// Build BM25 index from existing Qdrant data
-app.post('/ingest/build-bm25', ingestionLimiter, async (req, res) => {
-  try {
-    console.log('🔨 Building BM25 index from existing data...');
-    const vectorStoreService = require('./services/vectorStore.service');
-    const allChunks = await vectorStoreService.getAllChunks();
-    await bm25Service.buildIndex(allChunks);
-    const stats = bm25Service.getStats();
-    
-    res.json({
-      success: true,
-      message: 'BM25 index built successfully',
-      stats
-    });
-  } catch (error) {
-    console.error('Error building BM25 index:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
 });
 
 // Error handling middleware
@@ -205,19 +138,27 @@ app.use((req, res) => {
 
 // ===== START SERVER =====
 
-app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`✅ Knowella RAG API running on port ${PORT}`);
-  console.log(`📊 Ollama: ${process.env.OLLAMA_URL}`);
-  console.log(`🔍 Qdrant: ${process.env.QDRANT_URL}`);
-  console.log(`⏱️  Rate limit: ${process.env.RATE_LIMIT_MAX} requests/minute`);
-  
+const bm25Service = require('./services/bm25.service');
+
+async function startServer() {
   // Load BM25 index on startup
-  await bm25Service.loadIndex();
-  
-  // Start scheduled jobs
-  if (process.env.ENABLE_SCHEDULER !== 'false') {
-    schedulerService.start();
+  console.log('🔨 Loading BM25 index...');
+  const loaded = await bm25Service.loadIndex();
+
+  if (loaded) {
+    const stats = bm25Service.getStats();
+    console.log(`✅ BM25 index loaded: ${stats.totalDocuments} documents`);
   } else {
-    console.log('⏸️  Scheduler disabled (set ENABLE_SCHEDULER=true to enable)');
+    console.log('⚠️  BM25 index not found, will build during first ingestion');
   }
-});
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n✅ Knowella RAG API running on port ${PORT}`);
+    console.log(`📊 Ollama: ${process.env.OLLAMA_URL}`);
+    console.log(`🔍 Qdrant: ${process.env.QDRANT_URL}`);
+    console.log(`⏱️  Rate limit: ${process.env.RATE_LIMIT_MAX} requests/minute`);
+    console.log(`🔀 Hybrid search: ENABLED (BM25 + Semantic)\n`);
+  });
+}
+
+startServer();

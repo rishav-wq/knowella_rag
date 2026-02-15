@@ -12,9 +12,8 @@ module.exports = {
     // Which sub-sitemaps to include
     // These contain the actual page URLs we want to scrape
     includedSitemaps: [
-      'post-sitemap.xml',          // Blog posts (92 URLs)
-      'page-sitemap.xml',          // Static pages (70 URLs)
-      'pk_portfolio-sitemap.xml'   // Portfolio/case studies (23 URLs)
+      'post-sitemap.xml',          // Blog posts (educational content)
+      'page-sitemap.xml'           // Static pages (about, services, pricing, etc.)
     ],
     
     // Which sub-sitemaps to skip
@@ -24,15 +23,17 @@ module.exports = {
       'post_tag-sitemap.xml',      // Tag archive pages
       'post-archive-sitemap.xml',  // Date-based archives
       'ol_locator-sitemap.xml',    // Location pages (if any)
-      'portfolio-cat-sitemap.xml'   // Portfolio categories
+      'portfolio-cat-sitemap.xml', // Portfolio categories
+      'pk_portfolio-sitemap.xml',  // Portfolio/case studies - EXCLUDED
+      'pk-portfolio-sitemap.xml'   // Portfolio alternate - EXCLUDED
     ]
   },
 
   // Chunking configuration
   chunking: {
-    maxTokens: 800,        // Target chunk size in tokens (~600 words)
-    overlapTokens: 100,    // Overlap between chunks to preserve context
-    minChunkSize: 200      // Minimum chunk size (skip if smaller)
+    maxTokens: 500,        // 🔥 Reduced from 800 for more focused chunks
+    overlapTokens: 150,    // 🔥 Increased from 100 for better context preservation
+    minChunkSize: 100      // 🔥 Reduced from 200 to capture smaller sections
   },
 
   // Scraping behavior

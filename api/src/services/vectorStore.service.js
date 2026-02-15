@@ -97,9 +97,9 @@ class VectorStoreService {
 
   /**
    * Search for similar chunks
-   * @param {Array<number>} queryEmbedding 
-   * @param {number} limit 
-   * @returns {Promise<Array<{text: string, url: string, title: string, score: number}>>}
+   * @param {Array<number>} queryEmbedding
+   * @param {number} limit
+   * @returns {Promise<Array<{id: number, text: string, url: string, title: string, score: number}>>}
    */
   async search(queryEmbedding, limit = 5) {
     try {
@@ -108,16 +108,20 @@ class VectorStoreService {
         limit,
         with_payload: true
       });
-      
+
       return results.map(result => ({
-        id: result.id, // Include ID for hybrid search matching
+        id: result.id,  // Include ID for hybrid search fusion
         text: result.payload.text,
         url: result.payload.url,
         title: result.payload.title,
+        metadata: {
+          chunk_index: result.payload.chunk_index,
+          section_heading: result.payload.section_heading
+        },
         chunk_index: result.payload.chunk_index,
         score: result.score
       }));
-      
+
     } catch (error) {
       console.error('❌ Error searching Qdrant:', error.message);
       throw error;
@@ -125,9 +129,99 @@ class VectorStoreService {
   }
 
   /**
+   * Get specific chunks by their IDs
+   * @param {Array<number>} ids - Array of chunk IDs
+   * @returns {Promise<Array<{id: number, text: string, title: string, url: string, metadata: object}>>}
+   */
+  async getChunksByIds(ids) {
+    try {
+      if (ids.length === 0) return [];
+
+      const results = await this.client.retrieve(this.collectionName, {
+        ids: ids,
+        with_payload: true
+      });
+
+      return results.map(point => ({
+        id: point.id,
+        text: point.payload.text,
+        title: point.payload.title,
+        url: point.payload.url,
+        metadata: {
+          chunk_index: point.payload.chunk_index,
+          section_heading: point.payload.section_heading
+        }
+      }));
+
+    } catch (error) {
+      console.error('❌ Error fetching chunks by IDs:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Get all chunks from Qdrant (for BM25 index building)
+   * @returns {Promise<Array<{id: number, text: string, metadata: object}>>}
+   */
+  async getAllChunks() {
+    try {
+      const allChunks = [];
+      let offset = null;
+      const batchSize = 100;
+
+      console.log('📥 Fetching all chunks from Qdrant...');
+
+      // Use scroll API to get all points
+      while (true) {
+        const results = await this.client.scroll(this.collectionName, {
+          limit: batchSize,
+          offset: offset,
+          with_payload: true,
+          with_vector: false  // Don't need vectors for BM25
+        });
+
+        if (results.points.length === 0) {
+          break;
+        }
+
+        // Add chunks to array
+        results.points.forEach(point => {
+          allChunks.push({
+            id: point.id,
+            text: point.payload.text,
+            metadata: {
+              url: point.payload.url,
+              title: point.payload.title,
+              section_heading: point.payload.section_heading,
+              chunk_index: point.payload.chunk_index
+            }
+          });
+        });
+
+        // Update offset for next batch
+        offset = results.next_page_offset;
+
+        console.log(`  📦 Fetched ${allChunks.length} chunks...`);
+
+        // If no more results, break
+        if (!offset) {
+          break;
+        }
+      }
+
+      console.log(`✅ Fetched ${allChunks.length} total chunks`);
+      return allChunks;
+
+    } catch (error) {
+      console.error('❌ Error fetching all chunks:', error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Check if a URL's content has changed (using content hash)
-   * @param {string} url 
-   * @param {string} contentHash 
+   * @param {string} url
+   * @param {string} contentHash
    * @returns {Promise<boolean>} True if content is different (needs update)
    */
   async hasContentChanged(url, contentHash) {
@@ -142,16 +236,16 @@ class VectorStoreService {
         limit: 1,
         with_payload: true
       });
-      
+
       if (results.points.length === 0) {
         // URL not in database = new content
         return true;
       }
-      
+
       // Compare content hash
       const existingHash = results.points[0].payload.content_hash;
       return existingHash !== contentHash;
-      
+
     } catch (error) {
       console.error('❌ Error checking content hash:', error.message);
       return true; // On error, assume content changed
@@ -196,58 +290,6 @@ class VectorStoreService {
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
-  }
-
-  /**
-   * Get all chunks from collection (for BM25 index building)
-   * @returns {Promise<Array>}
-   */
-  async getAllChunks() {
-    try {
-      const batchSize = 100;
-      let offset = null;
-      const allChunks = [];
-
-      while (true) {
-        const result = await this.client.scroll(this.collectionName, {
-          limit: batchSize,
-          offset: offset,
-          with_payload: true,
-          with_vector: false // Don't need vectors for BM25
-        });
-
-        if (!result.points || result.points.length === 0) {
-          break;
-        }
-
-        // Extract chunks
-        for (const point of result.points) {
-          allChunks.push({
-            id: point.id,
-            text: point.payload.text,
-            metadata: {
-              url: point.payload.url,
-              title: point.payload.title,
-              section_heading: point.payload.section_heading,
-              chunk_index: point.payload.chunk_index
-            }
-          });
-        }
-
-        // Check if there are more points
-        if (!result.next_page_offset) {
-          break;
-        }
-        offset = result.next_page_offset;
-      }
-
-      console.log(`📚 Retrieved ${allChunks.length} chunks from Qdrant`);
-      return allChunks;
-
-    } catch (error) {
-      console.error('Error getting all chunks:', error.message);
-      return [];
-    }
   }
 
   /**

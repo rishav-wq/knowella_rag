@@ -96,18 +96,26 @@ class BM25Service {
 
   /**
    * Tokenize text into terms for BM25
+   * Preserves numbers, percentages, and special terms
    * @param {string} text - Text to tokenize
    * @returns {string[]} - Array of tokens
    */
   tokenize(text) {
     if (!text) return [];
-    
+
     return text
       .toLowerCase()
-      .replace(/[^\w\s-]/g, ' ') // Replace punctuation with spaces
+      // Normalize special cases before splitting
+      .replace(/(\d+)%/g, '$1percent')  // 70% → 70percent
+      .replace(/(\d+)x/g, '$1x')        // 1.8x → 1.8x
+      .replace(/[^\w\s.-]/g, ' ')       // Keep alphanumeric, dash, dot (for decimals)
       .split(/\s+/)
-      .filter(token => token.length > 2) // Filter out very short tokens
-      .filter(token => !this.isStopWord(token));
+      .filter(token => token.length > 0)  // Keep all non-empty tokens (including numbers)
+      .filter(token => !this.isStopWord(token))
+      .filter(token => {
+        // Keep if: contains digit OR length > 2
+        return /\d/.test(token) || token.length > 2;
+      });
   }
 
   /**

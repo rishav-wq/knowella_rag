@@ -2,7 +2,7 @@
 <div id="knowella-chat-widget">
     <!-- Chat Button (floating bubble) -->
     <button id="knowella-chat-button" class="knowella-chat-bubble" aria-label="Open Knowella Chat">
-        <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/llogo.png'; ?>" alt="Knowella Logo" style="width: 56px; height: 56px;">
+        <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/logo2.png'; ?>" alt="Knowella Logo" style="width: 56px; height: 56px;">
     </button>
     
     <!-- Chat Panel -->
@@ -11,7 +11,7 @@
         <div class="knowella-chat-header">
             <div class="knowella-chat-header-content">
                 <div class="knowella-chat-icon">
-                    <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/llogo.png'; ?>" alt="Knowella Logo" style="width: 48px; height: 48px;">
+                    <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/logo2.png'; ?>" alt="Knowella Logo" style="width: 48px; height: 48px;">
                 </div>
                 <div>
                     <h3 class="knowella-chat-title">Knowella Assistant</h3>

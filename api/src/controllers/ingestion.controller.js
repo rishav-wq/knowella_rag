@@ -1,7 +1,7 @@
 /**
  * Ingestion Controller
  * Orchestrates the full ingestion pipeline:
- * sitemap → scrape → chunk → embed → store
+ * sitemap → scrape → chunk → embed → store → bm25 index
  */
 
 const sitemapService = require('../services/sitemap.service');
@@ -54,29 +54,25 @@ class IngestionController {
         }
       }
       
+      // Step 3: Build BM25 index from all chunks in Qdrant
+      console.log(`\n🔨 Building BM25 index...`);
+      await this.buildBM25Index();
+
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
       const stats = await vectorStoreService.getStats();
-      
-      // Step 3: Build BM25 index from all chunks
-      console.log(`\n🔨 Building BM25 index...`);
-      const allChunks = await vectorStoreService.getAllChunks();
-      await bm25Service.buildIndex(allChunks);
-      const bm25Stats = bm25Service.getStats();
-      
+
       console.log(`\n✅ Ingestion complete!`);
       console.log(`   Processed: ${processedCount}`);
       console.log(`   Errors: ${errorCount}`);
       console.log(`   Time: ${elapsed}s`);
-      console.log(`   Total chunks in DB: ${stats.total_points}`);
-      console.log(`   BM25 index: ${bm25Stats.totalDocuments} documents\n`);
+      console.log(`   Total chunks in DB: ${stats.total_points}\n`);
       
       res.json({
         success: true,
         processed: processedCount,
         errors: errorCount,
         elapsed_seconds: parseFloat(elapsed),
-        stats,
-        bm25Stats
+        stats
       });
       
     } catch (error) {
@@ -97,7 +93,7 @@ class IngestionController {
     console.log(`📥 ${url}`);
     
     // 1. Scrape URL
-    const { title, content, contentHash, sections } = await scraperService.scrapeUrl(url);
+    const { title, content, contentHash } = await scraperService.scrapeUrl(url);
     
     if (!content || content.length < 100) {
       console.log(`  ⚠️  Skipped (insufficient content)`);
@@ -115,13 +111,12 @@ class IngestionController {
     // 3. Delete old chunks if re-ingesting
     await vectorStoreService.deleteByUrl(url);
     
-    // 4. Chunk the content (with section information)
+    // 4. Chunk the content
     const chunks = chunkerService.chunkText(content, {
       url,
       title,
       content_hash: contentHash,
-      last_crawled: lastmod || new Date().toISOString(),
-      sections: sections || []
+      last_crawled: lastmod || new Date().toISOString()
     });
     
     console.log(`  📝 ${chunks.length} chunks created`);
@@ -147,17 +142,41 @@ class IngestionController {
    */
   async verifyServices() {
     console.log('🔍 Verifying services...');
-    
+
     // Check Qdrant
     await vectorStoreService.initCollection();
-    
+
     // Check Ollama embedding model
     const hasModel = await embeddingsService.checkModel();
     if (!hasModel) {
       throw new Error('Embedding model not available in Ollama');
     }
-    
+
     console.log('✅ All services ready\n');
+  }
+
+  /**
+   * Build BM25 index from all chunks in Qdrant
+   */
+  async buildBM25Index() {
+    try {
+      // Fetch all chunks from Qdrant
+      const allChunks = await vectorStoreService.getAllChunks();
+
+      if (allChunks.length === 0) {
+        console.warn('⚠️  No chunks found in Qdrant, skipping BM25 index');
+        return;
+      }
+
+      // Build BM25 index
+      await bm25Service.buildIndex(allChunks);
+
+      console.log('✅ BM25 index built successfully\n');
+
+    } catch (error) {
+      console.error('❌ Error building BM25 index:', error.message);
+      console.warn('⚠️  Continuing without BM25 index (semantic-only mode)');
+    }
   }
 
   /**

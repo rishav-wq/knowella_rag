@@ -9,7 +9,7 @@ class ChunkerService {
   /**
    * Split text into overlapping chunks
    * @param {string} text - Full text content
-   * @param {object} metadata - Page metadata (url, title, sections)
+   * @param {object} metadata - Page metadata (url, title)
    * @returns {Array<{text: string, metadata: object}>}
    */
   chunkText(text, metadata = {}) {
@@ -20,14 +20,13 @@ class ChunkerService {
     
     // If text is small enough, return as single chunk
     if (estimatedTokens <= maxTokens) {
-      const sectionHeading = this.findSectionHeading(text, metadata.sections);
       return [{
         text,
         metadata: {
           ...metadata,
           chunk_index: 0,
           total_chunks: 1,
-          section_heading: sectionHeading
+          section_heading: this.generateSectionHeading(text)
         }
       }];
     }
@@ -63,58 +62,15 @@ class ChunkerService {
     }
     
     // Format chunks with metadata (include section_heading for retrieval)
-    return chunks.map((chunkText, index) => {
-      const sectionHeading = this.findSectionHeading(chunkText, metadata.sections);
-      
-      return {
-        text: chunkText,
-        metadata: {
-          ...metadata,
-          chunk_index: index,
-          total_chunks: chunks.length,
-          section_heading: sectionHeading
-        }
-      };
-    });
-  }
-
-  /**
-   * Find the most relevant section heading for a chunk of text
-   * @param {string} chunkText 
-   * @param {Array} sections 
-   * @returns {string}
-   */
-  findSectionHeading(chunkText, sections = []) {
-    if (!sections || sections.length === 0) {
-      return this.generateSectionHeading(chunkText);
-    }
-
-    // Try to find which section this chunk belongs to
-    // by checking if the chunk text appears in any section
-    let bestMatch = '';
-    let maxOverlap = 0;
-
-    for (const section of sections) {
-      if (!section.text) continue;
-
-      // Check if chunk text is contained in this section
-      const chunkWords = chunkText.toLowerCase().split(/\s+/).slice(0, 50); // First 50 words
-      const sectionWords = section.text.toLowerCase();
-      
-      let overlapCount = 0;
-      for (const word of chunkWords) {
-        if (word.length > 3 && sectionWords.includes(word)) {
-          overlapCount++;
-        }
+    return chunks.map((chunkText, index) => ({
+      text: chunkText,
+      metadata: {
+        ...metadata,
+        chunk_index: index,
+        total_chunks: chunks.length,
+        section_heading: this.generateSectionHeading(chunkText)
       }
-
-      if (overlapCount > maxOverlap) {
-        maxOverlap = overlapCount;
-        bestMatch = section.heading || '';
-      }
-    }
-
-    return bestMatch || this.generateSectionHeading(chunkText);
+    }));
   }
 
   /**
