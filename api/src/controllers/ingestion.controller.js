@@ -10,6 +10,7 @@ const chunkerService = require('../services/chunker.service');
 const embeddingsService = require('../services/embeddings.service');
 const vectorStoreService = require('../services/vectorStore.service');
 const bm25Service = require('../services/bm25.service');
+const notificationService = require('../services/notification.service');
 const config = require('../config/ingestion.config');
 
 class IngestionController {
@@ -20,40 +21,42 @@ class IngestionController {
    */
   async ingestKnowella(req, res) {
     const startTime = Date.now();
-    
+    const trigger = req.body.trigger || req.headers['x-webhook-trigger'] || 'manual';
+
     try {
       console.log('\n🚀 Starting Knowella ingestion pipeline...\n');
-      
+      console.log(`   Trigger: ${trigger}\n`);
+
       // Step 0: Verify services are ready
       await this.verifyServices();
-      
+
       // Step 1: Get all URLs from sitemaps
       const urls = await sitemapService.getKnowellaUrls();
-      
+
       // Step 2: Process each URL
       let processedCount = 0;
       let skippedCount = 0;
       let errorCount = 0;
-      
+
       const limit = req.query.limit ? parseInt(req.query.limit) : urls.length;
       const urlsToProcess = urls.slice(0, limit);
-      
+
       console.log(`\n📄 Processing ${urlsToProcess.length} URLs...\n`);
-      
+
       for (const { url, lastmod } of urlsToProcess) {
         try {
           await this.processUrl(url, lastmod);
           processedCount++;
-          
+
           // Rate limiting delay
           await this.delay(config.scraping.crawlDelay);
-          
+
         } catch (error) {
           console.error(`❌ Error processing ${url}:`, error.message);
           errorCount++;
         }
       }
-      
+
       // Step 3: Build BM25 index from all chunks in Qdrant
       console.log(`\n🔨 Building BM25 index...`);
       await this.buildBM25Index();
@@ -66,7 +69,15 @@ class IngestionController {
       console.log(`   Errors: ${errorCount}`);
       console.log(`   Time: ${elapsed}s`);
       console.log(`   Total chunks in DB: ${stats.total_points}\n`);
-      
+
+      // Send success notification if configured
+      await notificationService.sendIngestionSuccessAlert({
+        pagesProcessed: processedCount,
+        chunksCreated: stats.total_points,
+        errors: errorCount,
+        duration: elapsed
+      });
+
       res.json({
         success: true,
         processed: processedCount,
@@ -74,9 +85,17 @@ class IngestionController {
         elapsed_seconds: parseFloat(elapsed),
         stats
       });
-      
+
     } catch (error) {
       console.error('❌ Ingestion failed:', error);
+
+      // Send failure alert
+      await notificationService.sendIngestionFailureAlert(error, {
+        url: 'https://knowella.com',
+        trigger: trigger,
+        timestamp: new Date().toISOString()
+      });
+
       res.status(500).json({
         success: false,
         error: error.message

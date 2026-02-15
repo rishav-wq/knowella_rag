@@ -82,7 +82,8 @@ app.get('/', (req, res) => {
     endpoints: [
       'GET /health',
       'POST /chat/knowella',
-      'POST /ingest/knowella'
+      'POST /ingest/knowella',
+      'POST /webhook/wordpress-update'
     ]
   });
 });
@@ -104,6 +105,26 @@ app.get('/stats', (req, res) => {
 // Ingestion endpoints
 app.post('/ingest/knowella', ingestionLimiter, (req, res) => {
   ingestionController.ingestKnowella(req, res);
+});
+
+// Webhook endpoint for WordPress (no rate limiting for reliability)
+app.post('/webhook/wordpress-update', (req, res) => {
+  // Verify webhook secret
+  const webhookSecret = req.headers['x-webhook-secret'];
+  if (webhookSecret !== process.env.WEBHOOK_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid webhook secret' });
+  }
+
+  // Set webhook trigger header
+  req.headers['x-webhook-trigger'] = 'wordpress';
+  req.body.trigger = 'wordpress';
+
+  // Trigger ingestion asynchronously
+  ingestionController.ingestKnowella(req, res)
+    .catch(error => {
+      console.error('Webhook ingestion error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    });
 });
 
 app.post('/rebuild-bm25', ingestionLimiter, async (req, res) => {
