@@ -2,7 +2,7 @@
 <div id="knowella-chat-widget">
     <!-- Chat Button (floating bubble) -->
     <button id="knowella-chat-button" class="knowella-chat-bubble" aria-label="Open Knowella Chat">
-        <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/logo2.png'; ?>" alt="Knowella Logo">
+        <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/logo4.png'; ?>" alt="Knowella Logo">
     </button>
 
     <!-- Chat Panel -->
@@ -12,11 +12,11 @@
             <div class="knowella-chat-header-content">
                 <button id="knowella-chat-back" class="knowella-chat-back" aria-label="Back to welcome">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
                 <div class="knowella-chat-icon">
-                    <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/logo2.png'; ?>" alt="Knowella Logo">
+                    <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/logo4.png'; ?>" alt="Knowella Logo">
                 </div>
                 <div>
                     <h3 class="knowella-chat-title">Knowella Assistant</h3>
@@ -55,22 +55,26 @@
         <!-- Input Area -->
         <div class="knowella-chat-input-container">
             <form id="knowella-chat-form">
-                <input
-                    type="text"
-                    id="knowella-chat-input"
-                    class="knowella-chat-input"
-                    placeholder="Ask a question..."
-                    autocomplete="off"
-                    maxlength="500"
-                />
-                <button type="submit" id="knowella-chat-send" class="knowella-chat-send-btn" aria-label="Send message">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
+                <div class="knowella-input-card">
+                    <textarea
+                        id="knowella-chat-input"
+                        class="knowella-chat-input"
+                        placeholder="Type your message here"
+                        maxlength="500"
+                        rows="2"
+                    ></textarea>
+                    <div class="knowella-input-bottom-row">
+                        <div></div>
+                        <button type="submit" id="knowella-chat-send" class="knowella-chat-send-btn" aria-label="Send message">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </form>
             <p class="knowella-chat-disclaimer">
-                Powered by Knowella AI
+                Powered by Knowella AI Inc. Ella-Chatbot is a preview feature. Inputs may be used to improve the feature. AI-generated outputs may be inaccurate; verify before use. Do not share sensitive information here.
             </p>
         </div>
     </div>

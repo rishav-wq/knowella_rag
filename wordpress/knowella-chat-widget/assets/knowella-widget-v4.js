@@ -11,7 +11,8 @@
         apiUrl: 'http://localhost:3000/chat/knowella',
         pdfApiUrl: 'http://localhost:3000/chat/knowella/pdf',
         theme: 'light',
-        logoUrl: 'wordpress/knowella-chat-widget/assets/logo2.png'
+        logoUrl: 'wordpress/knowella-chat-widget/assets/logo4.png',
+        userIconUrl: 'wordpress/knowella-chat-widget/assets/icon.svg'
     };
 
     // DOM Elements
@@ -65,6 +66,14 @@
         chatClose.addEventListener('click', closeChat);
         chatBack.addEventListener('click', showWelcomeScreen);
         chatForm.addEventListener('submit', handleSubmit);
+
+        // Enter to send, Shift+Enter for new line
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+        });
 
         // View history button
         if (viewHistoryBtn) {
@@ -186,6 +195,12 @@
         chatMessages.classList.add('hidden');
         chatBack.classList.remove('active');
         chatInput.blur();
+
+        // Remove pre-chat form if present and show input area
+        const formOverlay = document.getElementById('knowella-prechat-overlay');
+        if (formOverlay) formOverlay.remove();
+        const inputContainer = chatPanel.querySelector('.knowella-chat-input-container');
+        if (inputContainer) inputContainer.style.display = '';
     }
 
     /**
@@ -196,6 +211,10 @@
         welcomeScreen.classList.add('hidden');
         chatMessages.classList.remove('hidden');
         chatBack.classList.add('active');
+
+        // Show input area (may have been hidden by pre-chat form)
+        const inputContainer = chatPanel.querySelector('.knowella-chat-input-container');
+        if (inputContainer) inputContainer.style.display = '';
 
         // Add welcome message if chat is empty
         if (chatMessages.children.length === 0) {
@@ -217,6 +236,10 @@
         welcomeScreen.classList.add('hidden');
         chatMessages.classList.add('hidden');
         chatBack.classList.remove('active');
+
+        // Hide input area during pre-chat form
+        const inputContainer = chatPanel.querySelector('.knowella-chat-input-container');
+        if (inputContainer) inputContainer.style.display = 'none';
 
         // Remove existing form if any
         const existingForm = document.getElementById('knowella-prechat-overlay');
@@ -264,8 +287,8 @@
         `;
 
         // Insert form overlay into chat panel (after header, before input)
-        const inputContainer = chatPanel.querySelector('.knowella-chat-input-container');
-        chatPanel.insertBefore(formOverlay, inputContainer);
+        const chatInputContainer = chatPanel.querySelector('.knowella-chat-input-container');
+        chatPanel.insertBefore(formOverlay, chatInputContainer);
 
         // Add form submit handler
         const form = document.getElementById('knowella-prechat-form-element');
@@ -531,7 +554,7 @@
         if (sender === 'bot') {
             avatarDiv.innerHTML = `<img src="${config.logoUrl}" alt="Bot" style="width: 100%; height: 100%; object-fit: contain;">`;
         } else {
-            avatarDiv.textContent = '👤';
+            avatarDiv.innerHTML = `<img src="${config.userIconUrl}" alt="User" style="width: 100%; height: 100%; object-fit: contain;">`;
         }
 
         // Message wrapper

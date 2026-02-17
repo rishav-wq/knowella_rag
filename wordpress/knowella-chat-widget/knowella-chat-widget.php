@@ -57,7 +57,8 @@ class Knowella_Chat_Widget {
         wp_localize_script('knowella-chat-widget', 'knowellaConfig', array(
             'apiUrl' => $this->api_url,
             'theme' => get_option('knowella_chat_theme', 'light'),
-            'logoUrl' => plugins_url('assets/logo2.png', __FILE__)
+            'logoUrl' => plugins_url('assets/logo4.png', __FILE__),
+            'userIconUrl' => plugins_url('assets/icon.svg', __FILE__)
         ));
     }
     

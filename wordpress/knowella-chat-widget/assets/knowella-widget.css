@@ -1,14 +1,14 @@
 /* Knowella Chat Widget Styles - Enhanced UI */
 
 :root {
-    --knowella-primary: #7c3aed;
-    --knowella-primary-hover: #6d28d9;
+    --knowella-primary: #6E63FF;
+    --knowella-primary-hover: #5B51E5;
     --knowella-bg: #ffffff;
     --knowella-text: #1f2937;
     --knowella-text-light: #6b7280;
     --knowella-border: #e5e7eb;
     --knowella-shadow: rgba(0, 0, 0, 0.1);
-    --knowella-message-user-bg: #7c3aed;
+    --knowella-message-user-bg: #6E63FF;
     --knowella-message-bot-bg: #f3f4f6;
 }
 
@@ -20,17 +20,17 @@
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: var(--knowella-primary);
+    background: #ffffff;
     color: white;
     border: none;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
     z-index: 9998;
-    padding: 12px;
+    padding: 6px;
 }
 
 .knowella-chat-bubble img {
@@ -41,8 +41,7 @@
 
 .knowella-chat-bubble:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
-    background: var(--knowella-primary-hover);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .knowella-chat-bubble:active {
@@ -54,7 +53,7 @@
     position: fixed;
     bottom: 24px;
     right: 24px;
-    width: 360px;
+    width: 420px;
     max-width: calc(100vw - 48px);
     height: 600px;
     max-height: calc(100vh - 100px);
@@ -254,13 +253,13 @@
 .knowella-welcome-avatar {
     width: 60px;
     height: 60px;
-    background: var(--knowella-primary);
+    background: #ffffff;
     border-radius: 50%;
     margin: 0 auto 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px;
+    padding: 0;
 }
 
 .knowella-welcome-avatar img {
@@ -445,13 +444,12 @@
 }
 
 .knowella-message-bot .knowella-message-avatar {
-    background: var(--knowella-primary);
+    background: #ffffff;
     padding: 4px;
 }
 
 .knowella-message-user .knowella-message-avatar {
-    background: #e5e7eb;
-    color: var(--knowella-text);
+    background: #ffffff;
 }
 
 .knowella-message-wrapper {
@@ -616,25 +614,47 @@
 /* Input Area */
 .knowella-chat-input-container {
     border-top: 1px solid var(--knowella-border);
-    padding: 16px;
+    padding: 12px 16px;
     background: var(--knowella-bg);
+    flex-shrink: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 #knowella-chat-form {
-    display: flex;
-    gap: 8px;
-    align-items: center;
     margin-bottom: 8px;
+    display: block;
+    width: 100%;
+}
+/* 
+.knowella-input-card {
+    background: #f3f4f6;
+    border-radius: 16px;
+    padding: 12px 14px 8px;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+} */
+ .knowella-input-card {
+    background: #f3f4f6;
+    border-radius: 16px;
+    padding: 8px 8px 8px 14px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .knowella-input-actions {
     display: flex;
-    gap: 8px;
+    gap: 4px;
 }
 
 .knowella-action-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     background: transparent;
     color: var(--knowella-text-light);
     border: none;
@@ -647,23 +667,44 @@
 }
 
 .knowella-action-btn:hover {
-    background: #f3f4f6;
+    background: #e5e7eb;
     color: var(--knowella-primary);
 }
 
 .knowella-chat-input {
+    /* width: 100%; */
     flex: 1;
-    padding: 10px 14px;
-    border: 1px solid var(--knowella-border);
-    border-radius: 20px;
+    padding: 0;
+    border: none;
+    background: transparent;
     font-size: 14px;
     font-family: inherit;
     outline: none;
-    transition: border-color 0.2s;
+    resize: none;
+    min-height: 44px;
+    max-height: 80px;
+    line-height: 1.4;
+    overflow-y: auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    color: #1f2937;
+    box-sizing: border-box;
+    display: block;
 }
 
-.knowella-chat-input:focus {
-    border-color: var(--knowella-primary);
+.knowella-chat-input::placeholder {
+    color: #9ca3af;
+}
+
+/* .knowella-input-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+} */
+.knowella-input-bottom-row {
+    display: contents;
 }
 
 .knowella-chat-send-btn {
@@ -835,7 +876,7 @@
 .knowella-form-group input:focus {
     outline: none;
     border-color: var(--knowella-primary);
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 3px rgba(110, 99, 255, 0.1);
 }
 
 .knowella-form-group input::placeholder {
@@ -872,7 +913,7 @@
 .knowella-prechat-submit:hover {
     background: var(--knowella-primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 4px 12px rgba(110, 99, 255, 0.3);
 }
 
 .knowella-prechat-submit:active {
