@@ -15,7 +15,7 @@
                         type="url" 
                         id="knowella_chat_api_url" 
                         name="knowella_chat_api_url" 
-                        value="<?php echo esc_attr(get_option('knowella_chat_api_url', 'http://localhost:3000/chat/knowella')); ?>" 
+                        value="<?php echo esc_attr(get_option('knowella_chat_api_url', 'https://apirg.knowella.com/chat/knowella')); ?>" 
                         class="regular-text"
                     />
                     <p class="description">The URL of your Knowella RAG API endpoint</p>

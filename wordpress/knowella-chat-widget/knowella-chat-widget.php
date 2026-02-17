@@ -20,7 +20,7 @@ class Knowella_Chat_Widget {
     
     public function __construct() {
         // API endpoint - update this for production
-        $this->api_url = get_option('knowella_chat_api_url', 'http://localhost:3000/chat/knowella');
+        $this->api_url = get_option('knowella_chat_api_url', 'https://apirg.knowella.com/chat/knowella');
         
         // Hooks
         add_action('wp_footer', array($this, 'render_widget'));
