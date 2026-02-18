@@ -44,8 +44,8 @@
                 <p class="knowella-faq-label">FREQUENTLY ASKED</p>
                 <div class="knowella-faq-list">
                     <button class="knowella-faq-btn" data-question="What is Knowella?">What is Knowella?</button>
+                    <button class="knowella-faq-btn" data-question="What products does Knowella offer?">What products does Knowella offer?</button>
                     <button class="knowella-faq-btn" data-question="How can Knowella help my business?">How can Knowella help my business?</button>
-                    <button class="knowella-faq-btn" data-question="What services does Knowella offer?">What services does Knowella offer?</button>
                 </div>
             </div>
 
