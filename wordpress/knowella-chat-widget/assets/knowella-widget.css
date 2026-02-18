@@ -487,6 +487,7 @@
     font-weight: 600 !important;
     font-size: 15px !important;
     margin-top: 8px !important;
+    text-align: center !important;
 }
 
 #knowella-chat-widget .knowella-prechat-submit:hover {
