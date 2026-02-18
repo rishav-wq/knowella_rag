@@ -24,7 +24,7 @@ class Knowella_Chat_Widget {
         
         // Hooks
         add_action('wp_footer', array($this, 'render_widget'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'), 999); // Load after theme styles
         add_action('admin_menu', array($this, 'add_settings_page'));
         add_action('admin_init', array($this, 'register_settings'));
     }
@@ -42,14 +42,14 @@ class Knowella_Chat_Widget {
             'knowella-chat-widget',
             plugins_url('assets/knowella-widget.css', __FILE__),
             array(),
-            '1.2.2'
+            '1.2.3'
         );
         
         wp_enqueue_script(
             'knowella-chat-widget',
             plugins_url('assets/knowella-widget-v4.js', __FILE__),
             array(),
-            '4.0.2',
+            '4.0.3',
             true
         );
 
