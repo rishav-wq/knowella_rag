@@ -3,7 +3,7 @@
  * Plugin Name: Knowella Chat Widget
  * Plugin URI: https://knowella.com
  * Description: AI-powered chat widget that answers questions using Knowella website content
- * Version: 1.0.0
+ * Version: 1.0.4
  * Author: Knowella
  * Author URI: https://knowella.com
  * License: GPL v2 or later
@@ -42,14 +42,14 @@ class Knowella_Chat_Widget {
             'knowella-chat-widget',
             plugins_url('assets/knowella-widget.css', __FILE__),
             array(),
-            '1.0.0'
+            '1.2.2'
         );
         
         wp_enqueue_script(
             'knowella-chat-widget',
             plugins_url('assets/knowella-widget-v4.js', __FILE__),
             array(),
-            '4.0.0',
+            '4.0.2',
             true
         );
 
@@ -58,6 +58,7 @@ class Knowella_Chat_Widget {
             'apiUrl' => $this->api_url,
             'theme' => get_option('knowella_chat_theme', 'light'),
             'logoUrl' => plugins_url('assets/logo4.png', __FILE__),
+            'prechatLogoUrl' => plugins_url('assets/logo5.png', __FILE__),
             'userIconUrl' => plugins_url('assets/icon.svg', __FILE__)
         ));
     }

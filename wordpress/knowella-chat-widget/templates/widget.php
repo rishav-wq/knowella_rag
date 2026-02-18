@@ -2,24 +2,27 @@
 <div id="knowella-chat-widget">
     <!-- Chat Button (floating bubble) -->
     <button id="knowella-chat-button" class="knowella-chat-bubble" aria-label="Open Knowella Chat">
-        <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/logo4.png'; ?>" alt="Knowella Logo">
+        <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/logo4.png'; ?>" alt="Knowella Logo" style="width: 38px; height: 38px;">
     </button>
 
     <!-- Chat Panel -->
     <div id="knowella-chat-panel" class="knowella-chat-panel" style="display: none;">
         <!-- Header -->
         <div class="knowella-chat-header">
+            <button id="knowella-chat-back" class="knowella-chat-back" aria-label="Back to welcome">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
             <div class="knowella-chat-header-content">
-                <button id="knowella-chat-back" class="knowella-chat-back" aria-label="Back to welcome">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
                 <div class="knowella-chat-icon">
-                    <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/logo4.png'; ?>" alt="Knowella Logo">
+                    <img src="<?php echo plugin_dir_url(dirname(__FILE__)) . 'assets/logo4.png'; ?>" alt="Knowella Logo" style="width: 32px; height: 32px;">
                 </div>
-                <div>
-                    <h3 class="knowella-chat-title">Knowella Assistant</h3>
+                <div class="knowella-chat-header-info">
+                    <h3 class="knowella-chat-title">
+                        Knowella Assistant
+                        <span class="knowella-status-indicator"></span>
+                    </h3>
                     <p class="knowella-chat-status">Ask me anything about Knowella</p>
                 </div>
             </div>
@@ -32,25 +35,37 @@
 
         <!-- Welcome Screen -->
         <div id="knowella-welcome-screen" class="knowella-welcome-screen">
-            <div class="knowella-welcome-content">
-                <h2>Hi there!</h2>
-                <p>I'm the Knowella AI assistant. I can help you learn about our products, services, and solutions.</p>
+            <div class="knowella-welcome-greeting">
+                <h2 class="knowella-welcome-title">👋 Hi there!</h2>
+                <p class="knowella-welcome-subtitle">I'm the Knowella AI assistant. I can help you learn about our products, services, and solutions.</p>
             </div>
 
             <div class="knowella-faq-section">
-                <h4>Frequently Asked</h4>
-                <button class="knowella-faq-btn" data-question="What is Knowella?">What is Knowella?</button>
-                <button class="knowella-faq-btn" data-question="What products does Knowella offer?">What products does Knowella offer?</button>
-                <button class="knowella-faq-btn" data-question="How can Knowella help my business?">How can Knowella help my business?</button>
+                <p class="knowella-faq-label">FREQUENTLY ASKED</p>
+                <div class="knowella-faq-list">
+                    <button class="knowella-faq-btn" data-question="What is Knowella?">What is Knowella?</button>
+                    <button class="knowella-faq-btn" data-question="How can Knowella help my business?">How can Knowella help my business?</button>
+                    <button class="knowella-faq-btn" data-question="What services does Knowella offer?">What services does Knowella offer?</button>
+                </div>
             </div>
 
-            <button id="knowella-view-history" class="knowella-view-history" style="display: none;">
-                View previous conversation
+            <!-- Hidden view history, shown by JS if history exists -->
+            <button class="knowella-view-history-btn" id="knowella-view-history" style="display:none;">
+                <div class="knowella-history-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="knowella-history-content">
+                    <p class="knowella-history-title">View History</p>
+                    <p class="knowella-history-subtitle">See your past conversation</p>
+                </div>
             </button>
         </div>
 
         <!-- Messages Container -->
-        <div id="knowella-chat-messages" class="knowella-chat-messages hidden"></div>
+        <div id="knowella-chat-messages" class="knowella-chat-messages" style="display:none;"></div>
 
         <!-- Input Area -->
         <div class="knowella-chat-input-container">
@@ -63,14 +78,11 @@
                         maxlength="500"
                         rows="2"
                     ></textarea>
-                    <div class="knowella-input-bottom-row">
-                        <div></div>
-                        <button type="submit" id="knowella-chat-send" class="knowella-chat-send-btn" aria-label="Send message">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </button>
-                    </div>
+                    <button type="submit" id="knowella-chat-send" class="knowella-chat-send-btn" aria-label="Send message">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             </form>
             <p class="knowella-chat-disclaimer">

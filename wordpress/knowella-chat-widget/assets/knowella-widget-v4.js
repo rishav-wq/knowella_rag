@@ -3,7 +3,7 @@
  * With welcome screen, FAQs, and improved message display
  */
 
-(function() {
+(function () {
     'use strict';
 
     // Configuration (passed from WordPress via wp_localize_script)
@@ -63,12 +63,12 @@
 
         // Event listeners
         chatButton.addEventListener('click', toggleChat);
-        chatClose.addEventListener('click', closeChat);
-        chatBack.addEventListener('click', showWelcomeScreen);
+        if (chatClose) chatClose.addEventListener('click', closeChat);
+        if (chatBack) chatBack.addEventListener('click', showWelcomeScreen);
         chatForm.addEventListener('submit', handleSubmit);
 
         // Enter to send, Shift+Enter for new line
-        chatInput.addEventListener('keydown', function(e) {
+        chatInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -191,8 +191,8 @@
      */
     function showWelcomeScreen() {
         currentView = 'welcome';
-        welcomeScreen.classList.remove('hidden');
-        chatMessages.classList.add('hidden');
+        welcomeScreen.style.display = 'flex';
+        chatMessages.style.display = 'none';
         chatBack.classList.remove('active');
         chatInput.blur();
 
@@ -208,8 +208,8 @@
      */
     function showChatView() {
         currentView = 'chat';
-        welcomeScreen.classList.add('hidden');
-        chatMessages.classList.remove('hidden');
+        welcomeScreen.style.display = 'none';
+        chatMessages.style.display = 'flex';
         chatBack.classList.add('active');
 
         // Show input area (may have been hidden by pre-chat form)
@@ -232,9 +232,9 @@
     function showPreChatForm() {
         currentView = 'form';
 
-        // Hide other views (don't destroy them)
-        welcomeScreen.classList.add('hidden');
-        chatMessages.classList.add('hidden');
+        // Hide other views using direct style (bypasses CSS specificity issues)
+        welcomeScreen.style.display = 'none';
+        chatMessages.style.display = 'none';
         chatBack.classList.remove('active');
 
         // Hide input area during pre-chat form
@@ -252,35 +252,36 @@
         formOverlay.innerHTML = `
             <div class="knowella-prechat-form">
                 <div class="knowella-prechat-header">
-                    <img src="${config.logoUrl}" alt="Knowella" class="knowella-prechat-logo">
+                    <div class="knowella-prechat-bot-icon"><img src="${config.prechatLogoUrl}" alt="Knowella" style="width:100%;height:100%;object-fit:contain;"></div>
                     <h3>Welcome to Knowella Chat!</h3>
                     <p>Please share your details to get started</p>
                 </div>
                 <form id="knowella-prechat-form-element">
                     <div class="knowella-form-group">
-                        <label for="knowella-user-name">Name *</label>
+                        <label for="knowella-user-name">Full Name <span class="knowella-required">*</span></label>
                         <input
                             type="text"
                             id="knowella-user-name"
-                            placeholder="Your full name"
+                            placeholder="Enter your full name"
                             required
                             minlength="2"
                         >
                     </div>
                     <div class="knowella-form-group">
-                        <label for="knowella-user-email">Email *</label>
+                        <label for="knowella-user-email">Email Address <span class="knowella-required">*</span></label>
                         <input
                             type="email"
                             id="knowella-user-email"
-                            placeholder="your.email@example.com"
+                            placeholder="Enter your email address"
                             required
                         >
                     </div>
                     <div class="knowella-form-privacy">
+                        <span class="knowella-privacy-shield">🛡️</span>
                         <small>We'll use this info to provide better support. Your privacy is important to us.</small>
                     </div>
                     <button type="submit" class="knowella-prechat-submit">
-                        Start Chatting
+                        Start Chatting with us
                     </button>
                 </form>
             </div>
@@ -335,8 +336,17 @@
         const formOverlay = document.getElementById('knowella-prechat-overlay');
         if (formOverlay) formOverlay.remove();
 
-        // Show original welcome screen
-        showWelcomeScreen();
+        // If there's a pending FAQ question, send it now
+        const pendingQuestion = window._knowellaPendingQuestion;
+        if (pendingQuestion) {
+            window._knowellaPendingQuestion = null;
+            showChatView();
+            chatInput.value = pendingQuestion;
+            chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        } else {
+            // Show original welcome screen
+            showWelcomeScreen();
+        }
 
         console.log('User info saved:', { name, email, sessionId });
     }
@@ -354,6 +364,14 @@
      */
     function handleFAQClick(e) {
         const question = e.target.dataset.question || e.target.textContent;
+
+        // If user info not collected yet, show pre-chat form first
+        if (!userInfo) {
+            // Store question to send after form submission
+            window._knowellaPendingQuestion = question;
+            showPreChatForm();
+            return;
+        }
 
         // Switch to chat view
         showChatView();
@@ -513,8 +531,8 @@
 
         // Escape HTML to prevent XSS
         html = html.replace(/&/g, '&amp;')
-                   .replace(/</g, '&lt;')
-                   .replace(/>/g, '&gt;');
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
 
         // Parse bold **text**
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -554,7 +572,11 @@
         if (sender === 'bot') {
             avatarDiv.innerHTML = `<img src="${config.logoUrl}" alt="Bot" style="width: 100%; height: 100%; object-fit: contain;">`;
         } else {
-            avatarDiv.innerHTML = `<img src="${config.userIconUrl}" alt="User" style="width: 100%; height: 100%; object-fit: contain;">`;
+            // Show user initials
+            const initials = userInfo && userInfo.name
+                ? userInfo.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                : 'U';
+            avatarDiv.textContent = initials;
         }
 
         // Message wrapper
@@ -591,6 +613,9 @@
                 citationLink.rel = 'noopener noreferrer';
                 citationLink.className = 'knowella-citation';
 
+                const bodyDiv = document.createElement('div');
+                bodyDiv.className = 'knowella-citation-body';
+
                 const titleSpan = document.createElement('span');
                 titleSpan.className = 'knowella-citation-title';
                 titleSpan.textContent = citation.title || 'Learn more';
@@ -599,21 +624,28 @@
                 urlSpan.className = 'knowella-citation-url';
                 urlSpan.textContent = citation.url;
 
-                citationLink.appendChild(titleSpan);
-                citationLink.appendChild(urlSpan);
+                bodyDiv.appendChild(titleSpan);
+                bodyDiv.appendChild(urlSpan);
+
+                const arrowSpan = document.createElement('span');
+                arrowSpan.className = 'knowella-citation-arrow';
+                arrowSpan.textContent = '↗';
+
+                citationLink.appendChild(bodyDiv);
+                citationLink.appendChild(arrowSpan);
                 citationsDiv.appendChild(citationLink);
             });
 
             contentDiv.appendChild(citationsDiv);
         }
 
-        // Timestamp
+        // Timestamp — inside the bubble
         const timeDiv = document.createElement('div');
         timeDiv.className = 'knowella-message-time';
         timeDiv.textContent = formatTime(new Date());
 
+        contentDiv.appendChild(timeDiv);
         wrapperDiv.appendChild(contentDiv);
-        wrapperDiv.appendChild(timeDiv);
         messageDiv.appendChild(avatarDiv);
         messageDiv.appendChild(wrapperDiv);
 
@@ -622,7 +654,12 @@
         // Save to session storage
         saveChatHistory();
 
-        scrollToBottom();
+        // Scroll: user messages go to bottom, bot messages scroll to show start of answer
+        if (sender === 'user') {
+            scrollToBottom();
+        } else {
+            scrollToMessage(messageDiv);
+        }
     }
 
     /**
@@ -733,6 +770,15 @@
     function scrollToBottom() {
         setTimeout(() => {
             chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
+    }
+
+    /**
+     * Scroll so the given message element is visible at the top of the chat area
+     */
+    function scrollToMessage(el) {
+        setTimeout(() => {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
     }
 
