@@ -42,14 +42,14 @@ class Knowella_Chat_Widget {
             'knowella-chat-widget',
             plugins_url('assets/knowella-widget.css', __FILE__),
             array(),
-            '1.2.4'
+            '1.2.5'
         );
         
         wp_enqueue_script(
             'knowella-chat-widget',
             plugins_url('assets/knowella-widget-v4.js', __FILE__),
             array(),
-            '4.0.3',
+            '4.0.4',
             true
         );
 
@@ -59,6 +59,7 @@ class Knowella_Chat_Widget {
             'theme' => get_option('knowella_chat_theme', 'light'),
             'logoUrl' => plugins_url('assets/logo4.png', __FILE__),
             'prechatLogoUrl' => plugins_url('assets/logo5.png', __FILE__),
+            'chatbotSmileIconUrl' => plugins_url('assets/chatbot-smile-icon.svg', __FILE__),
             'userIconUrl' => plugins_url('assets/icon.svg', __FILE__)
         ));
     }

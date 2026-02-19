@@ -252,7 +252,7 @@
         formOverlay.innerHTML = `
             <div class="knowella-prechat-form">
                 <div class="knowella-prechat-header">
-                    <div class="knowella-prechat-bot-icon"><img src="${config.prechatLogoUrl}" alt="Knowella" style="width:100%;height:100%;object-fit:contain;"></div>
+                    <div class="knowella-prechat-bot-icon"><img src="${config.chatbotSmileIconUrl || config.prechatLogoUrl}" alt="Knowella" style="width:100%;height:100%;object-fit:contain;"></div>
                     <h3>Welcome to Knowella Chat!</h3>
                     <p>Please share your details to get started</p>
                 </div>
@@ -476,7 +476,7 @@
         timeDiv.textContent = formatTime(new Date());
 
         wrapperDiv.appendChild(contentDiv);
-        wrapperDiv.appendChild(timeDiv);
+        contentDiv.appendChild(timeDiv);
         messageDiv.appendChild(avatarDiv);
         messageDiv.appendChild(wrapperDiv);
 
