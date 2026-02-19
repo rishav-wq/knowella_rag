@@ -153,7 +153,7 @@
 #knowella-chat-widget .knowella-chat-header-content {
     display: flex !important;
     align-items: center !important;
-    gap: 16px !important;
+    gap: 12px !important;
     flex: 1 !important;
 }
 
@@ -168,6 +168,7 @@
     border-radius: 4px !important;
     transition: background 0.2s ease !important;
     cursor: pointer !important;
+    margin-right: 8px !important;
 }
 
 #knowella-chat-widget .knowella-chat-back:hover {

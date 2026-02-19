@@ -42,7 +42,7 @@ class Knowella_Chat_Widget {
             'knowella-chat-widget',
             plugins_url('assets/knowella-widget.css', __FILE__),
             array(),
-            '1.2.5'
+            '1.2.6'
         );
         
         wp_enqueue_script(
