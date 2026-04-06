@@ -30,8 +30,16 @@ class IngestionController {
       // Step 0: Verify services are ready
       await this.verifyServices();
 
-      // Step 1: Get all URLs from sitemaps
-      const urls = await sitemapService.getKnowellaUrls();
+      // Step 1: Get all URLs from sitemaps + additional URLs
+      const sitemapUrls = await sitemapService.getKnowellaUrls();
+      const additionalUrls = (config.knowella.additionalUrls || []).map(url => ({
+        url,
+        lastmod: new Date().toISOString()
+      }));
+      const urls = [...sitemapUrls, ...additionalUrls];
+      if (additionalUrls.length > 0) {
+        console.log(`   + ${additionalUrls.length} additional URLs from config\n`);
+      }
 
       // Step 2: Process each URL
       let processedCount = 0;

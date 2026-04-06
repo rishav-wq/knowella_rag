@@ -29,6 +29,23 @@ module.exports = {
     ]
   },
 
+  // Additional URLs to ingest that are not in the sitemaps
+  // (e.g. support docs on a subdomain)
+  additionalUrls: [
+    'https://support.knowella.com/docs/app-builder/creating-template/',
+    'https://support.knowella.com/docs/app-builder/what-are-templates/',
+    'https://support.knowella.com/docs/app-builder/editing-template/',
+    'https://support.knowella.com/docs/app-builder/general-information-fields-in-template-creation/',
+    'https://support.knowella.com/docs/app-builder/categories-in-templates/',
+    'https://support.knowella.com/docs/app-builder/mandatory-vs-optional-fields/',
+    'https://support.knowella.com/docs/app-builder/deleting-template/',
+    'https://support.knowella.com/docs/app-builder/duplicating-template/',
+    'https://support.knowella.com/docs/app-builder/create-sections-template-knowella/',
+    'https://support.knowella.com/docs/app-builder/create-conditional-logic-fields-knowella/',
+    'https://support.knowella.com/docs/app-builder/form-color-settings-template-creation/',
+    'https://support.knowella.com/docs/app-builder/app-settings-fields-template-creation/'
+  ],
+
   // Chunking configuration
   chunking: {
     maxTokens: 500,        // 🔥 Reduced from 800 for more focused chunks
