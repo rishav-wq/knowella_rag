@@ -43,7 +43,12 @@ module.exports = {
     'https://support.knowella.com/docs/app-builder/create-sections-template-knowella/',
     'https://support.knowella.com/docs/app-builder/create-conditional-logic-fields-knowella/',
     'https://support.knowella.com/docs/app-builder/form-color-settings-template-creation/',
-    'https://support.knowella.com/docs/app-builder/app-settings-fields-template-creation/'
+    'https://support.knowella.com/docs/app-builder/app-settings-fields-template-creation/',
+    'https://support.knowella.com/docs/app-builder/what-can-i-build-using-app-builder/',
+    'https://support.knowella.com/docs/app-builder/adding-fields-form-elements/',
+    'https://support.knowella.com/docs/app-builder/add-qr-codes-form-templates/',
+    'https://support.knowella.com/docs/app-builder/repeat-section-template/',
+    'https://support.knowella.com/docs/app-builder/add-scoring-to-templates/'
   ],
 
   // Chunking configuration
